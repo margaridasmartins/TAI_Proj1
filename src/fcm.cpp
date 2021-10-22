@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include <algorithm>
 #include <chrono>
@@ -17,6 +18,7 @@ struct state {
 map<string, state> table;
 set<char> symbols;
 uint k, a;
+char line[100];
 
 void print_table() {
   printf("%6s ", "");
@@ -44,8 +46,16 @@ void init_table(string context = "") {
   }
 }
 
-void read_file() {
+void alphabet(FILE *fptr) {
   // estrutura com todos os simbolos
+  while (fgets(line, 100, fptr) != NULL) {
+    if (symbols.size()==49){    //ELIMINAR NA ENTREGA!!
+      break;
+    }
+    for (auto c:line){
+      symbols.insert(c);
+    }
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -63,22 +73,24 @@ int main(int argc, char *argv[]) {
 
   if ((fptr = fopen(filename, "r")) == NULL) {
     printf("ERR: File not found\n");
-
     // Program exits if the file pointer returns NULL.
     exit(1);
   }
 
-  char line[100];
-  while (fgets(line, 100, fptr) != NULL) {
-    printf("The line is: %s\n", line);
-  }
-
-  fclose(fptr);
-
-  symbols = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};  // test example
+  alphabet(fptr); //check the characters in the file
+  rewind(fptr); //move the file position pointer back to the start of the file
+  
+  double tablesize=(pow(symbols.size(),k+1))/1024/1024;
+  cout << "Size of table: " << tablesize << "MB\n";  
 
   init_table();
   print_table();
+
+  while (fgets(line, 100, fptr) != NULL) {
+    //printf("The line is: %s\n", line);
+  }
+  
+  fclose(fptr);
 
   return 0;
 }
