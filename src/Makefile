@@ -2,7 +2,7 @@
 all: fcm generator
 
 fcm: fcm.cpp
-	gcc -o ../bin/fcm fcm.cpp
+	g++ -Wall -g -o ../bin/fcm fcm.cpp -lm
 
 generator: generator.cpp
-	gcc -o ../bin/generator generator.cpp
+	g++ -Wall -g -o ../bin/generator generator.cpp -lm
