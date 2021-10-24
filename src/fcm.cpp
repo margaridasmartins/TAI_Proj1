@@ -25,7 +25,7 @@ void TableArr::train(FILE *fptr) {
   uint r = pow(n, k);
   table = new uint *[r];
   for (uint i = 0; i < r; i++) {
-    table[i] = new uint[n];
+    table[i] = new uint[n]();  // create array with 0s
   }
 
   // TODO: read file again and fill table
@@ -40,11 +40,12 @@ char TableArr::get_state(string context) {
 
 void TableArr::print() {
   // print header
-  printf("%6s ", "");
+  printf("%6s ", ".    .");
   for (auto pair : alphabet) {
     string c;
     c += pair.first;
-    printf("%4s ", c != "\n" ? c.c_str() : "\\n");
+    c = replace_all(c, "\n", "\\n");
+    printf("%4s ", c.c_str());
   }
   printf("\n");
 
@@ -92,7 +93,8 @@ void TableHash::print() {
   for (auto s : symbols) {
     string c;
     c += s;
-    printf("%4s ", c != "\n" ? c.c_str() : "\\n");
+    c = replace_all(c, "\n", "\\n");
+    printf("%4s ", c.c_str());
   }
   printf("\n");
 
@@ -129,10 +131,9 @@ void FCM::train(FILE *fptr) {
   uint id = 0;
   char line[100];
   while (fgets(line, 100, fptr) != NULL) {
-    if (symbols.size() == 49) {  // TODO: ELIMINAR NA ENTREGA!!
+    if (symbols.size() > 20) {  // TODO: ELIMINAR NA ENTREGA!!
       break;
     }
-    // printf("%s\n", line);
     for (auto c : line) {
       auto res = symbols.insert(c);
       if (res.second) {
