@@ -28,9 +28,28 @@ void TableArr::train(FILE *fptr) {
     table[i] = new uint[n]();  // create array with 0s
   }
 
-  // TODO: read file again and fill table
-  // uint id = alphabet[c];
-  // table[get_index(context)][id] = ...;
+  char context[k]; 
+
+  // first k letters
+  fgets(context, k, fptr);
+
+  // k+1 letter
+  char next_char=fgetc(fptr);
+  do{
+
+    table[get_index(context)][alphabet[next_char]]++;
+
+    // slide one
+    for(uint i =0; i<k-1;i++){
+      context[i]= context[i+1];
+    }
+
+    context[k-1]= next_char;
+    next_char=fgetc(fptr);
+
+  }while (next_char != EOF );
+
+
 }
 
 char TableArr::get_state(string context) {
@@ -79,11 +98,62 @@ TableHash::TableHash(uint k, uint a, set<char> symbols) : Table(k, a) {
 }
 
 void TableHash::train(FILE *fptr) {
-  // TODO: read file again and fill table
+
+  char context[k]; 
+
+  // first k letters
+  fgets(context, k+1, fptr);
+  
+  // k+1 letter
+  char next_char=fgetc(fptr);
+  do{
+    
+    if(table.find(context) != table.end()){
+      table[context].occorrencies[next_char]++;
+      table[context].sum ++;
+    }
+    else{
+      std::map<char, int> occ;
+      occ[next_char]=1;
+      state st = {  occ ,1};
+      table[context]=st;
+    }
+    
+    // slide one
+    for(uint i =0; i<k-1;i++){
+      context[i]= context[i+1];
+    }
+
+    context[k-1]= next_char;
+    next_char=fgetc(fptr);
+
+  }while (next_char != EOF );
+  
+          
 }
 
 char TableHash::get_state(string context) {
-  // TODO:
+
+  // if there is an entry in the hash table with such context
+  if(table.find(context) != table.end()){
+
+    auto it = table[context].occorrencies.begin();
+    int max =0;
+    char max_char;
+
+    //see which is the most probable letter
+    while (it!= table[context].occorrencies.end())
+    {
+      if(it->second>max){
+        max=it->second;
+        max_char= it->first;
+      }
+      it++;
+    }
+    return max_char;
+
+  }
+  
   return 0;
 }
 
@@ -100,6 +170,7 @@ void TableHash::print() {
 
   // print rows from all existant contexts
   for (auto pair : table) {
+
     string c = replace_all(pair.first, "\n", "\\n");
     printf("%6s ", c.c_str());
 
@@ -116,8 +187,8 @@ void TableHash::print() {
         printf("%4d ", 0);
         it1++;
       }
-      printf("\n");
     }
+    printf("\n");
   }
 }
 
@@ -129,12 +200,14 @@ FCM::FCM(uint k, uint a) {
 void FCM::train(FILE *fptr) {
   // check the characters in the file
   uint id = 0;
+  /*
   char line[100];
   while (fgets(line, 100, fptr) != NULL) {
-    if (symbols.size() > 20) {  // TODO: ELIMINAR NA ENTREGA!!
+    if (symbols.size() > 30) {  // TODO: ELIMINAR NA ENTREGA!!
       break;
     }
     for (auto c : line) {
+      printf("%c",c);
       auto res = symbols.insert(c);
       if (res.second) {
         // new symbol
@@ -142,12 +215,26 @@ void FCM::train(FILE *fptr) {
       }
     }
   }
+  */
+  char c= fgetc( fptr);
+  do{
+    if (symbols.size() > 200) {  // TODO: ELIMINAR NA ENTREGA!!
+      break;
+    }
+    auto res = symbols.insert(c);
+    if (res.second) {
+      // new symbol
+      alphabet[c] = id++;
+    }
+    c= fgetc(fptr);
+  }while (c !=EOF);
+
   rewind(fptr);  // move the file pointer back to the start of the file
 
   double tablesize = (pow(symbols.size(), k + 1)) / 1024 / 1024;
   printf("Size of table: %f MB\n", tablesize);
 
-  if (tablesize > 8000) {
+  if (tablesize < 10) { // Change this for hash/array table testing
     printf("Creating hash table...\n");
     table = new TableHash(k, a, symbols);
   } else {
