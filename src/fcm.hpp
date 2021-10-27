@@ -30,12 +30,14 @@ class Table {
 
   virtual void train(FILE *fptr) = 0;
   virtual char get_state(string context) = 0;
+  virtual double get_entropy(uint a) = 0;
+  virtual void generate_text() = 0;
   virtual void print() = 0;
 };
 
 class TableArr : public Table {
  private:
-  uint **table;
+  uint **table, total;
   map<char, uint> alphabet;
 
  public:
@@ -44,6 +46,8 @@ class TableArr : public Table {
   uint get_index(string context);
   void train(FILE *fptr);
   char get_state(string context);
+  double get_entropy(uint a);
+  void generate_text();
   void print();
 };
 
@@ -51,12 +55,15 @@ class TableHash : public Table {
  private:
   map<string, state> table;
   set<char> symbols;
+  uint total;
 
  public:
   TableHash(uint k, uint a, set<char> symbols);
 
   void train(FILE *fptr);
   char get_state(string context);
+  double get_entropy(uint a);
+  void generate_text();
   void print();
 };
 
@@ -72,7 +79,8 @@ class FCM {
 
   void train(FILE *fptr);
   char get_state(string context);
-  double get_entropy();
+  double get_entropy(uint a);
+  void generate_text();
   void print_table();
 };
 

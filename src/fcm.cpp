@@ -7,6 +7,7 @@ Table::Table(uint k, uint a) {
 
 TableArr::TableArr(uint k, uint a, map<char, uint> alphabet) : Table(k, a) {
   this->alphabet = alphabet;
+  this->total = 0;
 }
 
 uint TableArr::get_index(string context) {
@@ -25,7 +26,7 @@ void TableArr::train(FILE *fptr) {
   uint r = pow(n, k);
   table = new uint *[r];
   for (uint i = 0; i < r; i++) {
-    table[i] = new uint[n]();  // create array with 0s
+    table[i] = new uint[n+1]();  // create array with 0s
   }
 
   char context[k]; 
@@ -36,8 +37,10 @@ void TableArr::train(FILE *fptr) {
   // k+1 letter
   char next_char=fgetc(fptr);
   do{
-
-    table[get_index(context)][alphabet[next_char]]++;
+    
+    table[get_index(context)][alphabet[next_char]+1]++;
+    table[get_index(context)][0]++;
+    this->total++;
 
     // slide one
     for(uint i =0; i<k-1;i++){
@@ -48,8 +51,6 @@ void TableArr::train(FILE *fptr) {
     next_char=fgetc(fptr);
 
   }while (next_char != EOF );
-
-
 }
 
 char TableArr::get_state(string context) {
@@ -81,7 +82,7 @@ void TableArr::print() {
 
       uint id = get_index(context);
       for (auto pair : alphabet) {
-        printf("%4d ", table[id][alphabet[pair.first]]);
+        printf("%4d ", table[id][alphabet[pair.first]+1]);
       }
       printf("\n");
       continue;
@@ -93,8 +94,34 @@ void TableArr::print() {
   }
 }
 
+double TableArr::get_entropy(uint a){
+  double ent=0;
+  uint r=pow(alphabet.size(),k);
+  double contextEnt=0;
+  double letterProb;
+  for(uint id=0; id<r; id++){
+    for (uint j=0;j<alphabet.size();j++) {
+        if (table[id][0]!=0){
+          letterProb=(float)(table[id][j+1]+a)/(float)(table[id][0]+a*alphabet.size());
+          if (letterProb!=0){
+            contextEnt-=letterProb*log(letterProb);
+          }
+        }
+    }
+    ent+=((float)table[id][0]/(float)this->total)*contextEnt;
+    contextEnt=0;
+  }
+  return ent;
+}
+
+void TableArr::generate_text(){
+  return;
+}
+///////////////////////////////////////////////////////////////////////
+
 TableHash::TableHash(uint k, uint a, set<char> symbols) : Table(k, a) {
   this->symbols = symbols;
+  this->total = 0;
 }
 
 void TableHash::train(FILE *fptr) {
@@ -111,12 +138,14 @@ void TableHash::train(FILE *fptr) {
     if(table.find(context) != table.end()){
       table[context].occorrencies[next_char]++;
       table[context].sum ++;
+      this->total++;
     }
     else{
       std::map<char, int> occ;
       occ[next_char]=1;
       state st = {  occ ,1};
       table[context]=st;
+      this->total++;
     }
     
     // slide one
@@ -192,6 +221,32 @@ void TableHash::print() {
   }
 }
 
+double TableHash::get_entropy(uint a){
+  double ent=0;
+  double contextEnt=0;
+  double letterProb;
+  for (auto pair:table){
+    auto it=pair.second.occorrencies.begin();
+    while(it != pair.second.occorrencies.end()){
+      letterProb=((float)(*it).second+a)/((float)pair.second.sum+a*symbols.size());
+      //printf("%f ",letterProb);
+      if (letterProb!=0){
+        contextEnt-=letterProb*log(letterProb);
+      }
+      it++;
+    }
+    //printf("%f\n",contextEnt);
+    ent+=((float)pair.second.sum/(float)this->total)*contextEnt;
+    contextEnt=0;
+  }
+  return ent;
+}
+
+void TableHash::generate_text(){
+  return;
+}
+///////////////////////////////////////////////////////////////////////
+
 FCM::FCM(uint k, uint a) {
   this->k = k;
   this->a = a;
@@ -234,7 +289,7 @@ void FCM::train(FILE *fptr) {
   double tablesize = (pow(symbols.size(), k + 1)) / 1024 / 1024;
   printf("Size of table: %f MB\n", tablesize);
 
-  if (tablesize < 10) { // Change this for hash/array table testing
+  if (tablesize < 0) { // Change this for hash/array table testing
     printf("Creating hash table...\n");
     table = new TableHash(k, a, symbols);
   } else {
@@ -246,12 +301,13 @@ void FCM::train(FILE *fptr) {
 
 char FCM::get_state(string context) { return table->get_state(context); }
 
-double FCM::get_entropy() {
-  // TODO:
-  return 0;
+double FCM::get_entropy(uint a) {
+  return table->get_entropy(a);
 }
 
 void FCM::print_table() { table->print(); }
+
+///////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
@@ -275,6 +331,7 @@ int main(int argc, char *argv[]) {
   FCM *fcm = new FCM(k, a);
   fcm->train(fptr);
   fcm->print_table();
+  printf("Entropy is:%4f\n",fcm->get_entropy(a));
 
   fclose(fptr);
 
