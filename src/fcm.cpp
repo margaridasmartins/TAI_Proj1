@@ -1,11 +1,11 @@
 #include "fcm.hpp"
 
-Table::Table(uint k, uint a) {
+Table::Table(uint k, float a) {
   this->k = k;
   this->a = a;
 }
 
-TableArr::TableArr(uint k, uint a, map<char, uint> alphabet) : Table(k, a) {
+TableArr::TableArr(uint k, float a, map<char, uint> alphabet) : Table(k, a) {
   this->alphabet = alphabet;
   this->total = 0;
 }
@@ -94,7 +94,7 @@ void TableArr::print() {
   }
 }
 
-double TableArr::get_entropy(uint a){
+double TableArr::get_entropy(float a){
   double ent=0;
   uint r=pow(alphabet.size(),k);
   double contextEnt=0;
@@ -114,12 +114,12 @@ double TableArr::get_entropy(uint a){
   return ent;
 }
 
-void TableArr::generate_text(){
+void TableArr::generate_text(char prior[]){
   return;
 }
 ///////////////////////////////////////////////////////////////////////
 
-TableHash::TableHash(uint k, uint a, set<char> symbols) : Table(k, a) {
+TableHash::TableHash(uint k, float a, set<char> symbols) : Table(k, a) {
   this->symbols = symbols;
   this->total = 0;
 }
@@ -221,7 +221,7 @@ void TableHash::print() {
   }
 }
 
-double TableHash::get_entropy(uint a){
+double TableHash::get_entropy(float a){
   double ent=0;
   double contextEnt=0;
   double letterProb;
@@ -242,12 +242,12 @@ double TableHash::get_entropy(uint a){
   return ent;
 }
 
-void TableHash::generate_text(){
+void TableHash::generate_text(char prior[]){
   return;
 }
 ///////////////////////////////////////////////////////////////////////
 
-FCM::FCM(uint k, uint a) {
+FCM::FCM(uint k, float a) {
   this->k = k;
   this->a = a;
 }
@@ -315,11 +315,12 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  uint k, a;
+  uint k;
+  float a;
   char filename[100];
   sprintf(filename, "../example/%s.txt", argv[1]);
   k = atoi(argv[2]);
-  a = atoi(argv[3]);
+  a = atof(argv[3]);
 
   FILE *fptr;
 
