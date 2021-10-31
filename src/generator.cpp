@@ -1,10 +1,5 @@
 #include "fcm.hpp"
 
-Table::Table(uint k, float a)
-{
-  this->k = k;
-  this->a = a;
-}
 
 TableArr::TableArr(uint k, float a, map<char, uint> alphabet) : Table(k, a)
 {
@@ -478,5 +473,8 @@ Possibilidade de gerar prior
 Passar tamanho de texto a gerar como argumento
 Por o Array a dar 
 Graficos 
+  -> 
+  ->
+
 
 */

@@ -85,4 +85,9 @@ class FCM {
   void print_table();
 };
 
+Table::Table(uint k, float a) {
+  this->k = k;
+  this->a = a;
+}
+
 #endif

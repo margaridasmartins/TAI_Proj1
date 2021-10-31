@@ -1,9 +1,6 @@
 #include "fcm.hpp"
 
-Table::Table(uint k, float a) {
-  this->k = k;
-  this->a = a;
-}
+
 
 TableArr::TableArr(uint k, float a, map<char, uint> alphabet) : Table(k, a) {
   this->alphabet = alphabet;
