@@ -2,9 +2,10 @@
 
 ## Installing
 
-This library is required to plot the graphs with `sciplot`.
+Install the following libraries if not yet installed.
 ```
-sudo apt-get install gnuplot
+sudo apt-get install cmake
+sudo apt-get install gnuplot  # required for sciplot
 ```
 
 ## Compiling
