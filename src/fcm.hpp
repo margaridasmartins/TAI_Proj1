@@ -5,13 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <set>
 #include <stack>
 #include <string>
 #include <utility>
-#include <cstring>
 
 #include "utils.hpp"
 
@@ -112,31 +112,30 @@ void TableArr::train(FILE *fptr) {
   uint r = pow(n, k);
   table = new uint *[r];
   for (uint i = 0; i < r; i++) {
-    table[i] = new uint[n+1]();  // create array with 0s
+    table[i] = new uint[n + 1]();  // create array with 0s
   }
 
-  char context[k]; 
+  char context[k];
 
   // first k letters
   fgets(context, k, fptr);
 
   // k+1 letter
-  char next_char=fgetc(fptr);
-  do{
-    
-    table[get_index(context)][alphabet[next_char]+1]++;
+  char next_char = fgetc(fptr);
+  do {
+    table[get_index(context)][alphabet[next_char] + 1]++;
     table[get_index(context)][0]++;
     this->total++;
 
     // slide one
-    for(uint i =0; i<k-1;i++){
-      context[i]= context[i+1];
+    for (uint i = 0; i < k - 1; i++) {
+      context[i] = context[i + 1];
     }
 
-    context[k-1]= next_char;
-    next_char=fgetc(fptr);
+    context[k - 1] = next_char;
+    next_char = fgetc(fptr);
 
-  }while (next_char != EOF );
+  } while (next_char != EOF);
 }
 
 char TableArr::get_state(string context) {
@@ -168,7 +167,7 @@ void TableArr::print() {
 
       uint id = get_index(context);
       for (auto pair : alphabet) {
-        printf("%4d ", table[id][alphabet[pair.first]+1]);
+        printf("%4d ", table[id][alphabet[pair.first] + 1]);
       }
       printf("\n");
       continue;
@@ -180,42 +179,38 @@ void TableArr::print() {
   }
 }
 
-double TableArr::get_entropy(float a){
-  double ent=0;
-  uint r=pow(alphabet.size(),k);
-  double contextEnt=0;
+double TableArr::get_entropy(float a) {
+  double ent = 0;
+  uint r = pow(alphabet.size(), k);
+  double contextEnt = 0;
   double letterProb;
-  for(uint id=0; id<r; id++){
-    for (uint j=0;j<alphabet.size();j++) {
-        if (table[id][0]!=0){
-          letterProb=(float)(table[id][j+1]+a)/(float)(table[id][0]+a*alphabet.size());
-          if (letterProb!=0){
-            contextEnt-=letterProb*log(letterProb);
-          }
+  for (uint id = 0; id < r; id++) {
+    for (uint j = 0; j < alphabet.size(); j++) {
+      if (table[id][0] != 0) {
+        letterProb = (float)(table[id][j + 1] + a) /
+                     (float)(table[id][0] + a * alphabet.size());
+        if (letterProb != 0) {
+          contextEnt -= letterProb * log(letterProb);
         }
+      }
     }
-    ent+=((float)table[id][0]/(float)this->total)*contextEnt;
-    contextEnt=0;
+    ent += ((float)table[id][0] / (float)this->total) * contextEnt;
+    contextEnt = 0;
   }
   return ent;
 }
 
-void TableArr::generate_text(char prior[] = NULL)
-{
+void TableArr::generate_text(char prior[] = NULL) {
   char context[k];
   float random;
   float prob;
   uint id;
-  auto it=alphabet.begin();
+  auto it = alphabet.begin();
 
-
-  if (prior == NULL)
-  {
-    //create random context
-    do
-    {
-      for (uint i = 0; i < k; i++)
-      {
+  if (prior == NULL) {
+    // create random context
+    do {
+      for (uint i = 0; i < k; i++) {
         advance(it, rand() % alphabet.size());
         context[i] = (*it).first;
         it = alphabet.begin();
@@ -225,44 +220,35 @@ void TableArr::generate_text(char prior[] = NULL)
   }
 
   printf("%s", prior);
-  //write 1000 characters
-  for (uint i = 0; i < 1000; i++)
-  {
+  // write 1000 characters
+  for (uint i = 0; i < 1000; i++) {
     prob = 0;
     id = get_index(prior);
-    random = (float)rand() / (float)RAND_MAX; //generate target probability
+    random = (float)rand() / (float)RAND_MAX;  // generate target probability
     int sum = 0;
 
-    for (auto pair : alphabet)
-    {
+    for (auto pair : alphabet) {
       sum += table[id][alphabet[pair.first]];
     }
 
-    if (sum != 0)
-    {
-      for (auto pair : alphabet)
-      {
+    if (sum != 0) {
+      for (auto pair : alphabet) {
         prob += (float)(table[id][alphabet[pair.first]]) / (float)(sum);
         printf("%f", prob);
-        if (prob > random)
-        {
+        if (prob > random) {
           printf("%c", pair.first);
-          for (uint j = 0; j < k - 1; j++)
-          {
+          for (uint j = 0; j < k - 1; j++) {
             prior[j] = prior[j + 1];
           }
           prior[k - 1] = pair.first;
           break;
         }
       }
-    }
-    else
-    {
-      //put random char in front of context
+    } else {
+      // put random char in front of context
       advance(it, rand() % alphabet.size());
       printf("%c", (*it).first);
-      for (uint j = 0; j < k - 1; j++)
-      {
+      for (uint j = 0; j < k - 1; j++) {
         prior[j] = prior[j + 1];
       }
       prior[k - 1] = (*it).first;
@@ -280,64 +266,55 @@ TableHash::TableHash(uint k, float a, set<char> symbols) : Table(k, a) {
 }
 
 void TableHash::train(FILE *fptr) {
-
-  char context[k]; 
+  char context[k];
 
   // first k letters
-  fgets(context, k+1, fptr);
-  
+  fgets(context, k + 1, fptr);
+
   // k+1 letter
-  char next_char=fgetc(fptr);
-  do{
-    
-    if(table.find(context) != table.end()){
+  char next_char = fgetc(fptr);
+  do {
+    if (table.find(context) != table.end()) {
       table[context].occorrencies[next_char]++;
-      table[context].sum ++;
+      table[context].sum++;
       this->total++;
-    }
-    else{
+    } else {
       std::map<char, int> occ;
-      occ[next_char]=1;
-      state st = {  occ ,1};
-      table[context]=st;
+      occ[next_char] = 1;
+      state st = {occ, 1};
+      table[context] = st;
       this->total++;
     }
-    
+
     // slide one
-    for(uint i =0; i<k-1;i++){
-      context[i]= context[i+1];
+    for (uint i = 0; i < k - 1; i++) {
+      context[i] = context[i + 1];
     }
 
-    context[k-1]= next_char;
-    next_char=fgetc(fptr);
+    context[k - 1] = next_char;
+    next_char = fgetc(fptr);
 
-  }while (next_char != EOF );
-  
-          
+  } while (next_char != EOF);
 }
 
 char TableHash::get_state(string context) {
-
   // if there is an entry in the hash table with such context
-  if(table.find(context) != table.end()){
-
+  if (table.find(context) != table.end()) {
     auto it = table[context].occorrencies.begin();
-    int max =0;
+    int max = 0;
     char max_char;
 
-    //see which is the most probable letter
-    while (it!= table[context].occorrencies.end())
-    {
-      if(it->second>max){
-        max=it->second;
-        max_char= it->first;
+    // see which is the most probable letter
+    while (it != table[context].occorrencies.end()) {
+      if (it->second > max) {
+        max = it->second;
+        max_char = it->first;
       }
       it++;
     }
     return max_char;
-
   }
-  
+
   return 0;
 }
 
@@ -354,13 +331,12 @@ void TableHash::print() {
 
   // print rows from all existant contexts
   for (auto pair : table) {
-    
     string c = replace_all(pair.first, "\n", "\\n");
     printf("%6s ", c.c_str());
 
     auto it1 = symbols.begin();
     auto it2 = pair.second.occorrencies.begin();
-    
+
     while (it1 != symbols.end()) {
       if (*it1 == (*it2).first) {
         printf("%4d ", (*it2).second);
@@ -373,79 +349,67 @@ void TableHash::print() {
       }
     }
     printf("\n");
-    
   }
-
 }
 
-double TableHash::get_entropy(float a){
-  double ent=0;
-  double contextEnt=0;
+double TableHash::get_entropy(float a) {
+  double ent = 0;
+  double contextEnt = 0;
   double letterProb;
-  for (auto pair:table){
-    auto it=pair.second.occorrencies.begin();
-    while(it != pair.second.occorrencies.end()){
-      letterProb=((float)(*it).second+a)/((float)pair.second.sum+a*symbols.size());
-      //printf("%f ",letterProb);
-      if (letterProb!=0){
-        contextEnt-=letterProb*log(letterProb);
+  for (auto pair : table) {
+    auto it = pair.second.occorrencies.begin();
+    while (it != pair.second.occorrencies.end()) {
+      letterProb = ((float)(*it).second + a) /
+                   ((float)pair.second.sum + a * symbols.size());
+      // printf("%f ",letterProb);
+      if (letterProb != 0) {
+        contextEnt -= letterProb * log(letterProb);
       }
       it++;
     }
-    //printf("%f\n",contextEnt);
-    ent+=((float)pair.second.sum/(float)this->total)*contextEnt;
-    contextEnt=0;
+    // printf("%f\n",contextEnt);
+    ent += ((float)pair.second.sum / (float)this->total) * contextEnt;
+    contextEnt = 0;
   }
   return ent;
 }
 
-void TableHash::generate_text(char prior[])
-{
-
+void TableHash::generate_text(char prior[]) {
   float random;
   float prob;
-    
-  if (prior[0]==0)
-  {
-    //create random prior
-    auto it=table.begin();
-    advance(it, (int)(rand() % table.size()));
-    strcpy(prior,(it->first).c_str());
 
+  if (prior[0] == 0) {
+    // create random prior
+    auto it = table.begin();
+    advance(it, (int)(rand() % table.size()));
+    strcpy(prior, (it->first).c_str());
   }
 
-  //write 1000 characters
+  // write 1000 characters
   printf("PRIOR: %s\n", prior);
-  for (uint i = 0; i < 1000; i++)
-  {
+  for (uint i = 0; i < 1000; i++) {
     prob = 0;
-    random = (float)rand() / (float)RAND_MAX; //generate target probability
+    random = (float)rand() / (float)RAND_MAX;  // generate target probability
 
-    if (table.find(prior) != table.end())
-    {
-      for (auto pair : table[prior].occorrencies)
-      {
-        prob += (float)(pair.second + a) / (float)(table[prior].sum + (a * symbols.size()));
-        if (prob > random)
-        {
+    if (table.find(prior) != table.end()) {
+      for (auto pair : table[prior].occorrencies) {
+        prob += (float)(pair.second + a) /
+                (float)(table[prior].sum + (a * symbols.size()));
+        if (prob > random) {
           printf("%c", pair.first);
-          for (uint j = 0; j < k - 1; j++)
-          {
+          for (uint j = 0; j < k - 1; j++) {
             prior[j] = prior[j + 1];
           }
           prior[k - 1] = pair.first;
           break;
         }
       }
-    }
-    else
-    {
-      //put random char in front of context
-      auto it=symbols.begin();
+    } else {
+      // put random char in front of context
+      auto it = symbols.begin();
       advance(it, rand() % symbols.size());
       printf("%c", (*it));
-      for (uint j = 0; j < k - 1; j++)
-      {
+      for (uint j = 0; j < k - 1; j++) {
         prior[j] = prior[j + 1];
       }
       prior[k - 1] = (*it);
@@ -465,8 +429,8 @@ FCM::FCM(uint k, float a) {
 void FCM::train(FILE *fptr) {
   // check the characters in the file
   uint id = 0;
-  char c= fgetc( fptr);
-  do{
+  char c = fgetc(fptr);
+  do {
     if (symbols.size() > 200) {  // TODO: ELIMINAR NA ENTREGA!!
       break;
     }
@@ -475,15 +439,15 @@ void FCM::train(FILE *fptr) {
       // new symbol
       alphabet[c] = id++;
     }
-    c= fgetc(fptr);
-  }while (c !=EOF);
+    c = fgetc(fptr);
+  } while (c != EOF);
 
   rewind(fptr);  // move the file pointer back to the start of the file
 
   double tablesize = (pow(symbols.size(), k + 1)) / 1024 / 1024;
   printf("Size of table: %f MB\n", tablesize);
 
-  if (tablesize > 0) { // Change this for hash/array table testing
+  if (tablesize > 0) {  // Change this for hash/array table testing
     printf("Creating hash table...\n");
     table = new TableHash(k, a, symbols);
   } else {
@@ -495,15 +459,10 @@ void FCM::train(FILE *fptr) {
 
 char FCM::get_state(string context) { return table->get_state(context); }
 
-double FCM::get_entropy(uint a) {
-  return table->get_entropy(a);
-}
+double FCM::get_entropy(uint a) { return table->get_entropy(a); }
 
 void FCM::print_table() { table->print(); }
 
-void FCM::generate_text(char prior[])
-{
-  table->generate_text(prior);
-}
+void FCM::generate_text(char prior[]) { table->generate_text(prior); }
 
 #endif
