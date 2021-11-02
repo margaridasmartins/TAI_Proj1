@@ -13,7 +13,7 @@ sudo apt-get install gnuplot  # required for sciplot
 Execute the following line on the **first time**, to create the `Makefile`. 
 This will fetch `sciplot`, meaning there is no need for additional installations.
 ```
-cmake src/
+cd src/ && cmake .
 ```
 
 Afterwards, to compile there is only need to execute this line.
