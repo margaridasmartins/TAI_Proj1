@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <cstring>
 #include <iostream>
@@ -32,7 +33,7 @@ class Table {
   virtual void train(FILE *fptr) = 0;
   virtual char get_state(string context) = 0;
   virtual double get_entropy(float a) = 0;
-  virtual void generate_text(char prior[]) = 0;
+  virtual void generate_text(char prior[], uint textSize) = 0;
   virtual void print() = 0;
 };
 
@@ -48,7 +49,7 @@ class TableArr : public Table {
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(char prior[]);
+  void generate_text(char prior[],uint textSize);
   void print();
 };
 
@@ -64,7 +65,7 @@ class TableHash : public Table {
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(char prior[]);
+  void generate_text(char prior[],uint textSize);
   void print();
 };
 
@@ -82,7 +83,7 @@ class FCM {
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(uint a);
-  void generate_text(char prior[]);
+  void generate_text(char prior[],uint textSize);
   void print_table();
 };
 
@@ -200,7 +201,7 @@ double TableArr::get_entropy(float a) {
   return ent;
 }
 
-void TableArr::generate_text(char prior[] = NULL) {
+void TableArr::generate_text(char prior[] = NULL, uint textSize=1000) {
   char context[k];
   float random;
   float prob;
@@ -221,7 +222,7 @@ void TableArr::generate_text(char prior[] = NULL) {
 
   printf("%s", prior);
   // write 1000 characters
-  for (uint i = 0; i < 1000; i++) {
+  for (uint i = 0; i < textSize; i++) {
     prob = 0;
     id = get_index(prior);
     random = (float)rand() / (float)RAND_MAX;  // generate target probability
@@ -374,7 +375,7 @@ double TableHash::get_entropy(float a) {
   return ent;
 }
 
-void TableHash::generate_text(char prior[]) {
+void TableHash::generate_text(char prior[], uint textSize=1000) {
   float random;
   float prob;
 
@@ -387,7 +388,7 @@ void TableHash::generate_text(char prior[]) {
 
   // write 1000 characters
   printf("PRIOR: %s\n", prior);
-  for (uint i = 0; i < 1000; i++) {
+  for (uint i = 0; i < textSize; i++) {
     prob = 0;
     random = (float)rand() / (float)RAND_MAX;  // generate target probability
 
@@ -463,6 +464,6 @@ double FCM::get_entropy(uint a) { return table->get_entropy(a); }
 
 void FCM::print_table() { table->print(); }
 
-void FCM::generate_text(char prior[]) { table->generate_text(prior); }
+void FCM::generate_text(char prior[],uint textSize) { table->generate_text(prior,textSize); }
 
 #endif

@@ -3,15 +3,17 @@
 
 int main(int argc, char *argv[])
 {
-  if (argc != 4 && argc != 5)
+  if (argc < 4)
   {
     printf("ERR: Incorrect number of arguments\n");
+    printf("\ncd bin/ && ./generator <file-from-example-folder> <context-size> <alpha>\n# example\n./generator example 2 2\n");
+    printf("\nOptions:\n-p <prior>\t start text generator with prior\n-s <textSize>\t define number of characters of output text\n");
     exit(1);
   }
 
   uint k, a;
   char filename[100];
-  sprintf(filename, "../example/%s.txt", argv[1]);
+  sprintf(filename, "../TAI_Proj1/example/%s.txt", argv[1]);
   k = atoi(argv[2]);
   a = atoi(argv[3]);
 
@@ -23,22 +25,32 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  char prior[k];
+  prior[0]=0;
+  uint textSize=1000;
+  int option;
+
+  while((option = getopt(argc, argv, "p:s:h")) != -1){ //get option from the getopt() method
+    switch(option){
+        case 'p':
+          strcpy(prior,optarg);
+          break;
+        case 's':
+          textSize=atoi(optarg);
+          break;
+        case 'h':
+          printf("\ncd bin/ && ./generator <file-from-example-folder> <context-size> <alpha>\n# example\n./generator example 2 2\n");
+          printf("\nOptions:\n-p <prior>\t start text generator with prior\n-s <textSize>\t define number of characters of output text\n");
+        break;
+    }
+  }
+
+  printf("Prior: %s\n",prior);
+  printf("Text Size: %d\n",textSize);
   FCM *fcm = new FCM(k, a);
   fcm->train(fptr);
   fcm->print_table();
-
-
-  // if a prior is not passed the program will generate one
-  if (argc == 5)
-  {
-    fcm->generate_text(argv[4]);
-  }
-  else
-  {
-    char prior[k];
-    prior[0]=0;
-    fcm->generate_text(prior);
-  }
+  fcm->generate_text(prior,textSize);
 
   fclose(fptr);
 
