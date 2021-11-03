@@ -5,7 +5,7 @@ using namespace sciplot;
 
 void plot_graphs(FILE *fptr) {
   // Create values for your x-axis
-  Vec x = linspace(0.0, 5.0, 100);
+  Vec x = {1, 2, 3, 4, 5, 6};
 
   // Create a Plot object
   Plot plot;
@@ -13,11 +13,28 @@ void plot_graphs(FILE *fptr) {
   // Set color palette
   plot.palette("set2");
 
-  // Draw a sine graph putting x on the x-axis and sin(x) on the y-axis
-  plot.drawCurve(x, sin(x)).label("sin(x)").lineWidth(4);
+  float alphas[4] = {0.001, 0.1, 0.5, 1};
+  Vec *y = new Vec[4];
 
-  // Draw a cosine graph putting x on the x-axis and cos(x) on the y-axis
-  plot.drawCurve(x, cos(x)).label("cos(x)").lineWidth(4);
+  // 2:{0.0001:2.548, 0.001:2.548, 0.01:2.549, 0.1:2.559, 1:2.619, 2:2.669}
+
+  for (int j = 0; j < 4; j++)
+    y[j].resize(6);
+  
+  for (int i = 0; i < x.size(); i++) {
+    FCM *fcm = new FCM(x[i]);
+    fcm->train(fptr);
+    for (int j = 0; j < 4; j++) {
+      y[j][i] = fcm->get_entropy(alphas[j]);
+      printf("k= %2d a= %2.5f  ent= %2.5f\n", (uint)x[i], alphas[j], y[j][i]);
+    }
+  }
+  
+  for (int j = 0; j < 4; j++) {
+    char label[100];
+    sprintf(label, "alpha= %1.3f", alphas[j]);
+    plot.drawCurve(x, y[j]).label(label).lineWidth(1);
+  }
 
   // Show the plot in a pop-up window
   plot.show();
@@ -48,10 +65,10 @@ int main(int argc, char *argv[]) {
 
   plot_graphs(fptr);
 
-  FCM *fcm = new FCM(k);
-  fcm->train(fptr);
-  fcm->print_table();
-  printf("Entropy is: %4f\n", fcm->get_entropy(a));
+  // FCM *fcm = new FCM(k);
+  // fcm->train(fptr);
+  // fcm->print_table();
+  // printf("Entropy is: %4f\n", fcm->get_entropy(a));
 
   fclose(fptr);
 
