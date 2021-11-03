@@ -60,5 +60,7 @@
         "stack": "cpp",
         "valarray": "cpp",
         "variant": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": true,
+    "cmake.sourceDirectory": "${workspaceFolder}/_deps/sciplot_content-src"
 }
