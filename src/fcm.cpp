@@ -4,7 +4,6 @@
 using namespace sciplot;
 
 void plot_graphs(FILE *fptr) {
- 
   // Create values for your x-axis
   Vec x = linspace(0.0, 5.0, 100);
 
@@ -49,7 +48,7 @@ int main(int argc, char *argv[]) {
 
   plot_graphs(fptr);
 
-  FCM *fcm = new FCM(k, a);
+  FCM *fcm = new FCM(k);
   fcm->train(fptr);
   fcm->print_table();
   printf("Entropy is: %4f\n", fcm->get_entropy(a));

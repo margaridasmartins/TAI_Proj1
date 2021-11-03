@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  FCM *fcm = new FCM(k, a);
+  FCM *fcm = new FCM(k);
   fcm->train(fptr);
   fcm->print_table();
 
@@ -31,13 +31,13 @@ int main(int argc, char *argv[])
   // if a prior is not passed the program will generate one
   if (argc == 5)
   {
-    fcm->generate_text(argv[4]);
+    fcm->generate_text(a, argv[4]);
   }
   else
   {
     char prior[k];
     prior[0]=0;
-    fcm->generate_text(prior);
+    fcm->generate_text(a, prior);
   }
 
   fclose(fptr);

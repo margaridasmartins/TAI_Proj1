@@ -24,15 +24,15 @@ struct state {
 
 class Table {
  protected:
-  uint k, a;
+  uint k;
 
  public:
-  Table(uint k, float a);
+  Table(uint k);
 
   virtual void train(FILE *fptr) = 0;
   virtual char get_state(string context) = 0;
   virtual double get_entropy(float a) = 0;
-  virtual void generate_text(char prior[]) = 0;
+  virtual void generate_text(float a, char prior[]) = 0;
   virtual void print() = 0;
 };
 
@@ -42,13 +42,13 @@ class TableArr : public Table {
   map<char, uint> alphabet;
 
  public:
-  TableArr(uint k, float a, map<char, uint> alphabet);
+  TableArr(uint k, map<char, uint> alphabet);
 
   uint get_index(string context);
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(char prior[]);
+  void generate_text(float a, char prior[]);
   void print();
 };
 
@@ -59,39 +59,37 @@ class TableHash : public Table {
   uint total;
 
  public:
-  TableHash(uint k, float a, set<char> symbols);
+  TableHash(uint k, set<char> symbols);
 
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(char prior[]);
+  void generate_text(float a, char prior[]);
   void print();
 };
 
 class FCM {
  private:
   uint k;
-  float a;
   Table *table;
   set<char> symbols;
   map<char, uint> alphabet;
 
  public:
-  FCM(uint k, float a);
+  FCM(uint k);
 
   void train(FILE *fptr);
   char get_state(string context);
-  double get_entropy(uint a);
-  void generate_text(char prior[]);
+  double get_entropy(float a);
+  void generate_text(float a, char prior[]);
   void print_table();
 };
 
-Table::Table(uint k, float a) {
+Table::Table(uint k) {
   this->k = k;
-  this->a = a;
 }
 
-TableArr::TableArr(uint k, float a, map<char, uint> alphabet) : Table(k, a) {
+TableArr::TableArr(uint k, map<char, uint> alphabet) : Table(k) {
   this->alphabet = alphabet;
   this->total = 0;
 }
@@ -200,7 +198,7 @@ double TableArr::get_entropy(float a) {
   return ent;
 }
 
-void TableArr::generate_text(char prior[] = NULL) {
+void TableArr::generate_text(float a, char prior[] = NULL) {
   char context[k];
   float random;
   float prob;
@@ -260,7 +258,7 @@ void TableArr::generate_text(char prior[] = NULL) {
 
 ///////////////////////////////////////////////////////////////////////
 
-TableHash::TableHash(uint k, float a, set<char> symbols) : Table(k, a) {
+TableHash::TableHash(uint k, set<char> symbols) : Table(k) {
   this->symbols = symbols;
   this->total = 0;
 }
@@ -314,7 +312,6 @@ char TableHash::get_state(string context) {
     }
     return max_char;
   }
-
   return 0;
 }
 
@@ -374,7 +371,7 @@ double TableHash::get_entropy(float a) {
   return ent;
 }
 
-void TableHash::generate_text(char prior[]) {
+void TableHash::generate_text(float a, char prior[]) {
   float random;
   float prob;
 
@@ -421,9 +418,8 @@ void TableHash::generate_text(char prior[]) {
 
 ///////////////////////////////////////////////////////////////////////
 
-FCM::FCM(uint k, float a) {
+FCM::FCM(uint k) {
   this->k = k;
-  this->a = a;
 }
 
 void FCM::train(FILE *fptr) {
@@ -449,20 +445,20 @@ void FCM::train(FILE *fptr) {
 
   if (tablesize > 0) {  // Change this for hash/array table testing
     printf("Creating hash table...\n");
-    table = new TableHash(k, a, symbols);
+    table = new TableHash(k, symbols);
   } else {
     printf("Creating array table...\n");
-    table = new TableArr(k, a, alphabet);
+    table = new TableArr(k, alphabet);
   }
   table->train(fptr);
 }
 
 char FCM::get_state(string context) { return table->get_state(context); }
 
-double FCM::get_entropy(uint a) { return table->get_entropy(a); }
+double FCM::get_entropy(float a) { return table->get_entropy(a); }
 
 void FCM::print_table() { table->print(); }
 
-void FCM::generate_text(char prior[]) { table->generate_text(prior); }
+void FCM::generate_text(float a, char prior[]) { table->generate_text(a, prior); }
 
 #endif
