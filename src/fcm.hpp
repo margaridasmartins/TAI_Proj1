@@ -56,11 +56,11 @@ class TableArr : public Table {
 class TableHash : public Table {
  private:
   map<string, state> table;
-  set<char> symbols;
+  map<char,uint> symbols;
   uint total;
 
  public:
-  TableHash(uint k, set<char> symbols);
+  TableHash(uint k, map<char,uint> symbols);
 
   void train(FILE *fptr);
   char get_state(string context);
@@ -73,7 +73,7 @@ class FCM {
  private:
   uint k;
   Table *table;
-  set<char> symbols;
+  map<char,uint> symbols;
   map<char, uint> alphabet;
 
  public:
@@ -259,7 +259,7 @@ void TableArr::generate_text(float a, char prior[] = NULL, uint textSize=1000) {
 
 ///////////////////////////////////////////////////////////////////////
 
-TableHash::TableHash(uint k, set<char> symbols) : Table(k) {
+TableHash::TableHash(uint k, map<char,uint> symbols) : Table(k) {
   this->symbols = symbols;
   this->total = 0;
 }
@@ -273,6 +273,7 @@ void TableHash::train(FILE *fptr) {
   // k+1 letter
   char next_char = fgetc(fptr);
   do {
+    symbols[next_char]++;
     if (table.find(context) != table.end()) {
       table[context].occorrencies[next_char]++;
       table[context].sum++;
@@ -321,7 +322,7 @@ void TableHash::print() {
   printf("%6s ", "");
   for (auto s : symbols) {
     string c;
-    c += s;
+    c += s.first;
     c = replace_all(c, "\n", "\\n");
     printf("%4s ", c.c_str());
   }
@@ -336,7 +337,7 @@ void TableHash::print() {
     auto it2 = pair.second.occorrencies.begin();
 
     while (it1 != symbols.end()) {
-      if (*it1 == (*it2).first) {
+      if ((*it1).first == (*it2).first) {
         printf("%4d ", (*it2).second);
         it1++;
         it2++;
@@ -404,14 +405,17 @@ void TableHash::generate_text(float a, char prior[], uint textSize=1000) {
       }
     } else {
       // put random char in front of context
-      auto it = symbols.begin();
-      advance(it, rand() % symbols.size());
-      printf("%c", (*it));
-      for (uint j = 0; j < k - 1; j++) {
-        prior[j] = prior[j + 1];
+      for (auto pair:symbols){
+        prob+=(float)pair.second/(float)this->total;
+        if (prob > random) {
+          printf("%c", pair.first);
+          for (uint j = 0; j < k - 1; j++) {
+            prior[j] = prior[j + 1];
+          }
+          prior[k - 1] = pair.first;
+          break;
+        }
       }
-      prior[k - 1] = (*it);
-      it = symbols.begin();
     }
   }
   printf("\n");
@@ -431,9 +435,9 @@ void FCM::train(FILE *fptr) {
     if (symbols.size() > 200) {  // TODO: ELIMINAR NA ENTREGA!!
       break;
     }
-    auto res = symbols.insert(c);
-    if (res.second) {
+    if (symbols.find(c)==symbols.end()){
       // new symbol
+      symbols[c]=0;
       alphabet[c] = id++;
     }
     c = fgetc(fptr);
