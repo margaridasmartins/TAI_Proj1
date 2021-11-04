@@ -355,7 +355,7 @@ void TableHash::print() {
 }
 
 double TableHash::get_entropy(float a) {
-  assert(a > 0);
+  assert(a >= 0);
   double ent = 0;
   double contextEnt = 0;
   double letterProb;
@@ -388,7 +388,7 @@ double TableHash::get_entropy(float a) {
 
 void TableHash::generate_text(float a, char prior[], uint textSize = 1000) {
   printf("%f\n", a);
-  assert(a > 0);
+  assert(a >= 0);
   float random;
   float prob;
 
