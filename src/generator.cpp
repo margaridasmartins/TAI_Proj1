@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  char prior[k];
+  char *prior = new char[k];
   prior[0] = 0;
   uint textSize = 1000;
   int option;

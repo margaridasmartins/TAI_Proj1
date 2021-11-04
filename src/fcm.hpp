@@ -218,7 +218,7 @@ void TableArr::generate_text(float a, char prior[] = NULL,
     printf("%s\n", context);
   }
 
-  printf("\33[43m%s\33[0m", prior);
+  printf("\33[45m%s\33[0m", prior);
   // write 1000 characters
   for (uint i = 0; i < textSize; i++) {
     prob = 0;
@@ -227,6 +227,7 @@ void TableArr::generate_text(float a, char prior[] = NULL,
     int sum = 0;
 
     for (auto pair : alphabet) {
+      // printf("%d %d %d %d \n", pow(alphabet.size(), k));
       sum += table[id][alphabet[pair.first]];
     }
 
@@ -364,7 +365,6 @@ double TableHash::get_entropy(float a) {
     while (it != pair.second.occorrencies.end()) {
       letterProb = ((float)(*it).second + a) /
                    ((float)pair.second.sum + a * symbols.size());
-      // printf("%f ", letterProb);
       contextEnt -= letterProb * log2(letterProb);
       it++;
     }
@@ -373,21 +373,19 @@ double TableHash::get_entropy(float a) {
     letterProb = a / ((float)pair.second.sum + a * symbols.size());
     contextEnt -= (letterProb * log2(letterProb)) * n;
 
-    // printf("%f\n", contextEnt);
-    ent += ((float)pair.second.sum / (float)this->total) * contextEnt;
+    ent += ((float)(pair.second.sum + a) / (float)(this->total + a * pow(symbols.size(), k))) * contextEnt;
     contextEnt = 0;
   }
   // contexts not present in table
-  int n = pow(symbols.size(), k) - table.size();
+  uint64_t n = pow(symbols.size(), k) - table.size();
   letterProb = (float)1 / symbols.size();  // a / (a * symbols.size())
   contextEnt = -(letterProb * log2(letterProb)) * symbols.size();
-  ent += (a * symbols.size() / (float)this->total) * contextEnt;
+  ent += (a / (float)(this->total + a * pow(symbols.size(), k))) * contextEnt;
 
   return ent;
 }
 
 void TableHash::generate_text(float a, char prior[], uint textSize = 1000) {
-  printf("%f\n", a);
   assert(a > 0);
   float random;
   float prob;
@@ -400,7 +398,7 @@ void TableHash::generate_text(float a, char prior[], uint textSize = 1000) {
   }
 
   // write 1000 characters
-  printf("\33[43m%s\33[0m", prior);
+  printf("\33[45m%s\33[0m", prior);
   for (uint i = 0; i < textSize; i++) {
     prob = 0;
     random = (float)rand() / (float)RAND_MAX;  // generate target probability
@@ -458,7 +456,7 @@ void FCM::train(FILE *fptr) {
   double tablesize = (pow(symbols.size(), k + 1)) / 1024 / 1024;
   printf("Size of table: %f MB\n", tablesize);
 
-  if (true) {  // Change this for hash/array table testing
+  if (1) {  // Change this for hash/array table testing
     printf("Creating hash table...\n");
     table = new TableHash(k, symbols);
   } else {
