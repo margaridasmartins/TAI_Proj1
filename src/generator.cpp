@@ -36,7 +36,12 @@ int main(int argc, char *argv[]) {
          -1) {  // get option from the getopt() method
     switch (option) {
       case 'p':
-        strcpy(prior, optarg);
+        if(strlen(optarg)>=k){
+          strncpy(prior, optarg + (strlen(optarg)- k),  k);
+        }
+        else{
+          strncpy(prior, optarg ,  k);
+        }
         break;
       case 's':
         textSize = atoi(optarg);
