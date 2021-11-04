@@ -12,11 +12,13 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  uint k, a;
+  uint k;
+  float a;
   char filename[100];
-  sprintf(filename, "../TAI_Proj1/example/%s.txt", argv[1]);
+  sprintf(filename, "../example/%s.txt", argv[1]);
   k = atoi(argv[2]);
-  a = atoi(argv[3]);
+  a = atof(argv[3]);
+  printf("%f\n", a);
 
   FILE *fptr;
 

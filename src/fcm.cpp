@@ -1,11 +1,13 @@
 #include "fcm.hpp"
 
+#include <vector>
 #include <sciplot/sciplot.hpp>
 using namespace sciplot;
 
 void plot_graphs(FILE *fptr) {
   // Create values for your x-axis
   Vec x = {1, 2, 3, 4, 5, 6};
+  // vector<uint> x = {2, 1, 3, 4, 5, 6};
 
   // Create a Plot object
   Plot plot;
@@ -13,10 +15,13 @@ void plot_graphs(FILE *fptr) {
   // Set color palette
   plot.palette("set2");
 
+  plot.fontSize(5);
+
+  // plot.le
+
   float alphas[4] = {0.001, 0.1, 0.5, 1};
   Vec *y = new Vec[4];
-
-  // 2:{0.0001:2.548, 0.001:2.548, 0.01:2.549, 0.1:2.559, 1:2.619, 2:2.669}
+  // vector<double> y[4];
 
   for (int j = 0; j < 4; j++)
     y[j].resize(6);
@@ -24,9 +29,12 @@ void plot_graphs(FILE *fptr) {
   for (int i = 0; i < x.size(); i++) {
     FCM *fcm = new FCM(x[i]);
     fcm->train(fptr);
+    // fcm->print_table();
     for (int j = 0; j < 4; j++) {
       y[j][i] = fcm->get_entropy(alphas[j]);
-      printf("k= %2d a= %2.5f  ent= %2.5f\n", (uint)x[i], alphas[j], y[j][i]);
+      // y[j].push_back(fcm->get_entropy(alphas[j]));
+
+      printf("k= %2d a= %2.5f  ent= %2.7f\n", (uint)x[i], alphas[j], y[j][i]);
     }
   }
   

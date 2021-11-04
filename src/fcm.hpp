@@ -1,6 +1,7 @@
 #ifndef _FCM_HPP_
 #define _FCM_HPP_
 
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,23 +50,23 @@ class TableArr : public Table {
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(float a, char prior[],uint textSize);
+  void generate_text(float a, char prior[], uint textSize);
   void print();
 };
 
 class TableHash : public Table {
  private:
   map<string, state> table;
-  map<char,uint> symbols;
+  map<char, uint> symbols;
   uint total;
 
  public:
-  TableHash(uint k, map<char,uint> symbols);
+  TableHash(uint k, map<char, uint> symbols);
 
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(float a, char prior[],uint textSize);
+  void generate_text(float a, char prior[], uint textSize);
   void print();
 };
 
@@ -73,7 +74,7 @@ class FCM {
  private:
   uint k;
   Table *table;
-  map<char,uint> symbols;
+  map<char, uint> symbols;
   map<char, uint> alphabet;
 
  public:
@@ -82,13 +83,11 @@ class FCM {
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(float a, char prior[],uint textSize);
+  void generate_text(float a, char prior[], uint textSize);
   void print_table();
 };
 
-Table::Table(uint k) {
-  this->k = k;
-}
+Table::Table(uint k) { this->k = k; }
 
 TableArr::TableArr(uint k, map<char, uint> alphabet) : Table(k) {
   this->alphabet = alphabet;
@@ -107,6 +106,8 @@ uint TableArr::get_index(string context) {
 };
 
 void TableArr::train(FILE *fptr) {
+  rewind(fptr);
+
   uint n = alphabet.size();
   uint r = pow(n, k);
   table = new uint *[r];
@@ -179,19 +180,16 @@ void TableArr::print() {
 }
 
 double TableArr::get_entropy(float a) {
+  assert(a > 0);
   double ent = 0;
   uint r = pow(alphabet.size(), k);
   double contextEnt = 0;
   double letterProb;
   for (uint id = 0; id < r; id++) {
     for (uint j = 0; j < alphabet.size(); j++) {
-      if (table[id][0] != 0) {
-        letterProb = (float)(table[id][j + 1] + a) /
-                     (float)(table[id][0] + a * alphabet.size());
-        if (letterProb != 0) {
-          contextEnt -= letterProb * log(letterProb);
-        }
-      }
+      letterProb = (float)(table[id][j + 1] + a) /
+                   (float)(table[id][0] + a * alphabet.size());
+      contextEnt -= letterProb * log2(letterProb);
     }
     ent += ((float)table[id][0] / (float)this->total) * contextEnt;
     contextEnt = 0;
@@ -199,7 +197,9 @@ double TableArr::get_entropy(float a) {
   return ent;
 }
 
-void TableArr::generate_text(float a, char prior[] = NULL, uint textSize=1000) {
+void TableArr::generate_text(float a, char prior[] = NULL,
+                             uint textSize = 1000) {
+  assert(a > 0);
   char context[k];
   float random;
   float prob;
@@ -218,7 +218,7 @@ void TableArr::generate_text(float a, char prior[] = NULL, uint textSize=1000) {
     printf("%s\n", context);
   }
 
-  printf("%s", prior);
+  printf("\33[43m%s\33[0m", prior);
   // write 1000 characters
   for (uint i = 0; i < textSize; i++) {
     prob = 0;
@@ -259,12 +259,15 @@ void TableArr::generate_text(float a, char prior[] = NULL, uint textSize=1000) {
 
 ///////////////////////////////////////////////////////////////////////
 
-TableHash::TableHash(uint k, map<char,uint> symbols) : Table(k) {
+TableHash::TableHash(uint k, map<char, uint> symbols) : Table(k) {
   this->symbols = symbols;
   this->total = 0;
 }
 
 void TableHash::train(FILE *fptr) {
+  rewind(fptr);
+  table.clear();
+
   char context[k];
 
   // first k letters
@@ -352,6 +355,7 @@ void TableHash::print() {
 }
 
 double TableHash::get_entropy(float a) {
+  assert(a > 0);
   double ent = 0;
   double contextEnt = 0;
   double letterProb;
@@ -360,20 +364,31 @@ double TableHash::get_entropy(float a) {
     while (it != pair.second.occorrencies.end()) {
       letterProb = ((float)(*it).second + a) /
                    ((float)pair.second.sum + a * symbols.size());
-      // printf("%f ",letterProb);
-      if (letterProb != 0) {
-        contextEnt -= letterProb * log(letterProb);
-      }
+      // printf("%f ", letterProb);
+      contextEnt -= letterProb * log2(letterProb);
       it++;
     }
-    // printf("%f\n",contextEnt);
+    // letters not present in occorrencies
+    int n = symbols.size() - pair.second.occorrencies.size();
+    letterProb = a / ((float)pair.second.sum + a * symbols.size());
+    contextEnt -= (letterProb * log2(letterProb)) * n;
+
+    // printf("%f\n", contextEnt);
     ent += ((float)pair.second.sum / (float)this->total) * contextEnt;
     contextEnt = 0;
   }
+  // contexts not present in table
+  int n = pow(symbols.size(), k) - table.size();
+  letterProb = (float)1 / symbols.size();  // a / (a * symbols.size())
+  contextEnt = -(letterProb * log2(letterProb)) * symbols.size();
+  ent += (a * symbols.size() / (float)this->total) * contextEnt;
+
   return ent;
 }
 
-void TableHash::generate_text(float a, char prior[], uint textSize=1000) {
+void TableHash::generate_text(float a, char prior[], uint textSize = 1000) {
+  printf("%f\n", a);
+  assert(a > 0);
   float random;
   float prob;
 
@@ -385,7 +400,7 @@ void TableHash::generate_text(float a, char prior[], uint textSize=1000) {
   }
 
   // write 1000 characters
-  printf("PRIOR: %s\n", prior);
+  printf("\33[43m%s\33[0m", prior);
   for (uint i = 0; i < textSize; i++) {
     prob = 0;
     random = (float)rand() / (float)RAND_MAX;  // generate target probability
@@ -405,8 +420,8 @@ void TableHash::generate_text(float a, char prior[], uint textSize=1000) {
       }
     } else {
       // put random char in front of context
-      for (auto pair:symbols){
-        prob+=(float)pair.second/(float)this->total;
+      for (auto pair : symbols) {
+        prob += (float)pair.second / (float)this->total;
         if (prob > random) {
           printf("%c", pair.first);
           for (uint j = 0; j < k - 1; j++) {
@@ -423,32 +438,27 @@ void TableHash::generate_text(float a, char prior[], uint textSize=1000) {
 
 ///////////////////////////////////////////////////////////////////////
 
-FCM::FCM(uint k) {
-  this->k = k;
-}
+FCM::FCM(uint k) { this->k = k; }
 
 void FCM::train(FILE *fptr) {
+  rewind(fptr);  // move the file pointer back to the start of the file
+
   // check the characters in the file
   uint id = 0;
   char c = fgetc(fptr);
   do {
-    if (symbols.size() > 200) {  // TODO: ELIMINAR NA ENTREGA!!
-      break;
-    }
-    if (symbols.find(c)==symbols.end()){
+    if (symbols.find(c) == symbols.end()) {
       // new symbol
-      symbols[c]=0;
+      symbols[c] = 0;
       alphabet[c] = id++;
     }
     c = fgetc(fptr);
   } while (c != EOF);
 
-  rewind(fptr);  // move the file pointer back to the start of the file
-
   double tablesize = (pow(symbols.size(), k + 1)) / 1024 / 1024;
   printf("Size of table: %f MB\n", tablesize);
 
-  if (tablesize > 0) {  // Change this for hash/array table testing
+  if (true) {  // Change this for hash/array table testing
     printf("Creating hash table...\n");
     table = new TableHash(k, symbols);
   } else {
@@ -464,6 +474,8 @@ double FCM::get_entropy(float a) { return table->get_entropy(a); }
 
 void FCM::print_table() { table->print(); }
 
-void FCM::generate_text(float a, char prior[],uint textSize) { table->generate_text(a, prior,textSize); }
+void FCM::generate_text(float a, char prior[], uint textSize) {
+  table->generate_text(a, prior, textSize);
+}
 
 #endif
