@@ -384,8 +384,8 @@ double TableHash::get_entropy(float a) {
   for (auto pair : table) {
     auto it = pair.second.occorrencies.begin();
     while (it != pair.second.occorrencies.end()) {
-      letterProb =
-          (double)((*it).second + a) / (pair.second.sum + a * symbols.size());
+      letterProb = (double)((*it).second + a) / 
+                   (pair.second.sum + a * symbols.size());
       contextEnt -= letterProb * log2(letterProb);
       it++;
     }
@@ -396,9 +396,6 @@ double TableHash::get_entropy(float a) {
 
     ent += (double)(pair.second.sum + a) /
            (this->total + a * pow(symbols.size(), k)) * contextEnt;
-    // ent += (double)(pair.second.sum + a*symbols.size()) /
-    //        (this->total + a * pow(symbols.size(), k+1)) *
-    //        contextEnt;
     contextEnt = 0;
   }
   // contexts not present in table
@@ -406,11 +403,8 @@ double TableHash::get_entropy(float a) {
   letterProb = (double)1 / symbols.size();  // a / (a * symbols.size())
   contextEnt = -(letterProb * log2(letterProb)) * symbols.size();
 
-  ent +=
-      (double)a / (this->total + a * pow(symbols.size(), k)) * contextEnt * n;
-  // ent += (double)a*symbols.size() / (this->total + a * pow(symbols.size(),
-  // k+1))
-  // * contextEnt * n;
+  ent += (double)a / 
+         (this->total + a * pow(symbols.size(), k)) * contextEnt * n;
 
   return ent;
 }
