@@ -1,6 +1,6 @@
 #include "fcm.hpp"
 
-#include <vector>
+// #include <vector>
 #include <sciplot/sciplot.hpp>
 using namespace sciplot;
 
@@ -17,15 +17,12 @@ void plot_graphs(FILE *fptr) {
 
   plot.fontSize(5);
 
-  // plot.le
-
   float alphas[4] = {0.001, 0.1, 0.5, 1};
   Vec *y = new Vec[4];
   // vector<double> y[4];
 
-  for (int j = 0; j < 4; j++)
-    y[j].resize(6);
-  
+  for (int j = 0; j < 4; j++) y[j].resize(6);
+
   for (int i = 0; i < x.size(); i++) {
     FCM *fcm = new FCM(x[i]);
     fcm->train(fptr);
@@ -37,7 +34,7 @@ void plot_graphs(FILE *fptr) {
       printf("k= %2d a= %2.5f  ent= %2.7f\n", (uint)x[i], alphas[j], y[j][i]);
     }
   }
-  
+
   for (int j = 0; j < 4; j++) {
     char label[100];
     sprintf(label, "alpha= %1.3f", alphas[j]);
@@ -52,7 +49,19 @@ void plot_graphs(FILE *fptr) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
+  string help_text =
+      "Usage:\n"
+      "  ./fcm filename context_size alpha [options]\n"
+      "Required:\n"
+      "  filename       The name of the file inside the example folder to train the generator\n"
+      "  context_size   The size of the context which translates into the order of the model\n"
+      "  alpha          The value for the smoothing parameter\n"
+      "Options:\n"
+      "  -i           Plot additional statistical information about the model\n"
+      "Example:\n"
+      "  ./fcm example 2 0.5\n";
+
+  if (argc < 4) {
     printf("ERR: Incorrect number of arguments\n");
     exit(1);
   }
@@ -71,12 +80,33 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  plot_graphs(fptr);
+  bool show_stats;
+  int option, option_index = 0;
+  static struct option long_options[] = {{"stats", no_argument, 0, 'i'},
+                                         {"help", no_argument, 0, 'h'},
+                                         {0, 0, 0, 0}};
 
-  // FCM *fcm = new FCM(k);
-  // fcm->train(fptr);
+  while ((option = getopt_long(argc, argv, "ih", long_options,
+                               &option_index)) != -1) {
+    switch (option) {
+      case 'i':
+        show_stats = true;
+        break;
+      case 'h':
+        printf("%s", help_text.c_str());
+        exit(0);
+    }
+  }
+
+  FCM *fcm = new FCM(k);
+  fcm->train(fptr);
   // fcm->print_table();
-  // printf("Entropy is: %4f\n", fcm->get_entropy(a));
+  printf("Entropy: %2.5f\n", fcm->get_entropy(a));
+
+  if (show_stats) {
+    printf("\nCreating plots...");
+    plot_graphs(fptr);
+  }
 
   fclose(fptr);
 
