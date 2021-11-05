@@ -36,7 +36,7 @@ class Table {
   virtual void train(FILE *fptr) = 0;
   virtual char get_state(string context) = 0;
   virtual double get_entropy(float a) = 0;
-  virtual void generate_text(float a, char prior[], uint textSize,
+  virtual void generate_text(float a, char prior[], uint text_size,
                              bool relative_random, bool show_random) = 0;
   virtual void print() = 0;
 };
@@ -53,8 +53,8 @@ class TableArr : public Table {
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(float a, char prior[], uint textSize, bool relative_random,
-                     bool show_random);
+  void generate_text(float a, char prior[], uint text_size,
+                     bool relative_random, bool show_random);
   void print();
 };
 
@@ -68,8 +68,8 @@ class TableHash : public Table {
   void train(FILE *fptr);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(float a, char prior[], uint textSize, bool relative_random,
-                     bool show_random);
+  void generate_text(float a, char prior[], uint text_size,
+                     bool relative_random, bool show_random);
   void print();
 };
 
@@ -86,8 +86,8 @@ class FCM {
   void train(FILE *fptr, float threshold);
   char get_state(string context);
   double get_entropy(float a);
-  void generate_text(float a, char prior[], uint textSize, bool relative_random,
-                     bool show_random);
+  void generate_text(float a, char prior[], uint text_size,
+                     bool relative_random, bool show_random);
   void print_table();
 };
 
@@ -207,7 +207,7 @@ double TableArr::get_entropy(float a) {
   return ent;
 }
 
-void TableArr::generate_text(float a, char *prior, uint textSize,
+void TableArr::generate_text(float a, char *prior, uint text_size,
                              bool relative_random, bool show_random) {
   assert(a >= 0);
   char context[k];
@@ -218,15 +218,15 @@ void TableArr::generate_text(float a, char *prior, uint textSize,
   if (prior[0] == 0) {
     // create random prior
     for (uint i = 0; i < k; i++) {
-      auto it = alphabet.begin();
-      advance(it, rand() % alphabet.size());
+      auto it = symbols.begin();
+      advance(it, rand() % symbols.size());
       prior[i] = (*it).first;
     }
   }
 
   printf("\n\33[4m%s\33[0m", prior);
   // write 1000 characters
-  for (uint i = 0; i < textSize; i++) {
+  for (uint i = 0; i < text_size; i++) {
     prob = 0;
     id = get_index(prior);
     random = (float)rand() / RAND_MAX;  // generate target probability
@@ -415,7 +415,7 @@ double TableHash::get_entropy(float a) {
   return ent;
 }
 
-void TableHash::generate_text(float a, char *prior, uint textSize,
+void TableHash::generate_text(float a, char *prior, uint text_size,
                               bool relative_random, bool show_random) {
   assert(a >= 0);
   float random;
@@ -423,14 +423,16 @@ void TableHash::generate_text(float a, char *prior, uint textSize,
 
   if (prior[0] == 0) {
     // create random prior
-    auto it = table.begin();
-    advance(it, (int)(rand() % table.size()));
-    strcpy(prior, (it->first).c_str());
+    for (uint i = 0; i < k; i++) {
+      auto it = symbols.begin();
+      advance(it, rand() % symbols.size());
+      prior[i] = (*it).first;
+    }
   }
 
   // write 1000 characters
   printf("\n\33[4m%s\33[0m", prior);
-  for (uint i = 0; i < textSize; i++) {
+  for (uint i = 0; i < text_size; i++) {
     prob = 0;
     random = (float)rand() / RAND_MAX;  // generate target probability
 
@@ -527,9 +529,9 @@ double FCM::get_entropy(float a) { return table->get_entropy(a); }
 
 void FCM::print_table() { table->print(); }
 
-void FCM::generate_text(float a, char prior[], uint textSize,
+void FCM::generate_text(float a, char prior[], uint text_size,
                         bool relative_random, bool show_random) {
-  table->generate_text(a, prior, textSize, relative_random, show_random);
+  table->generate_text(a, prior, text_size, relative_random, show_random);
 }
 
 #endif

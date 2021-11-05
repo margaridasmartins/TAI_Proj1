@@ -95,6 +95,8 @@ int main(int argc, char *argv[]) {
       case 'h':
         printf("%s", help_text.c_str());
         exit(0);
+      default:
+        abort();
     }
   }
 
