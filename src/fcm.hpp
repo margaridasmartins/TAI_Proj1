@@ -27,9 +27,11 @@ struct state {
 class Table {
  protected:
   uint k;
+  map<char, uint> symbols;  // overall symbol frequency
+  uint total;               // number of symbols in the file
 
  public:
-  Table(uint k);
+  Table(uint k, map<char, uint> symbols);
 
   virtual void train(FILE *fptr) = 0;
   virtual char get_state(string context) = 0;
@@ -42,10 +44,10 @@ class Table {
 class TableArr : public Table {
  private:
   uint **table, total;
-  map<char, uint> alphabet;
+  map<char, uint> alphabet;  // symbols ID
 
  public:
-  TableArr(uint k, map<char, uint> alphabet);
+  TableArr(uint k, map<char, uint> symbols, map<char, uint> alphabet);
 
   uint get_index(string context);
   void train(FILE *fptr);
@@ -59,8 +61,6 @@ class TableArr : public Table {
 class TableHash : public Table {
  private:
   map<string, state> table;
-  map<char, uint> symbols;
-  uint total;
 
  public:
   TableHash(uint k, map<char, uint> symbols);
@@ -91,11 +91,15 @@ class FCM {
   void print_table();
 };
 
-Table::Table(uint k) { this->k = k; }
-
-TableArr::TableArr(uint k, map<char, uint> alphabet) : Table(k) {
-  this->alphabet = alphabet;
+Table::Table(uint k, map<char, uint> symbols) {
+  this->k = k;
+  this->symbols = symbols;
   this->total = 0;
+}
+
+TableArr::TableArr(uint k, map<char, uint> symbols, map<char, uint> alphabet)
+    : Table(k, symbols) {
+  this->alphabet = alphabet;
 }
 
 uint TableArr::get_index(string context) {
@@ -127,16 +131,18 @@ void TableArr::train(FILE *fptr) {
   // k+1 letter
   char next_char = fgetc(fptr);
   do {
+    symbols[next_char]++;
+    this->total++;
+
     table[get_index(context)][alphabet[next_char] + 1]++;
     table[get_index(context)][0]++;
-    this->total++;
 
     // slide one
     for (uint i = 0; i < k - 1; i++) {
       context[i] = context[i + 1];
     }
-
     context[k - 1] = next_char;
+
     next_char = fgetc(fptr);
 
   } while (next_char != EOF);
@@ -208,14 +214,13 @@ void TableArr::generate_text(float a, char *prior, uint textSize,
   float random;
   float prob;
   uint id;
-  auto it = alphabet.begin();
 
   if (prior[0] == 0) {
     // create random prior
     for (uint i = 0; i < k; i++) {
+      auto it = alphabet.begin();
       advance(it, rand() % alphabet.size());
       prior[i] = (*it).first;
-      it = alphabet.begin();
     }
   }
 
@@ -224,7 +229,7 @@ void TableArr::generate_text(float a, char *prior, uint textSize,
   for (uint i = 0; i < textSize; i++) {
     prob = 0;
     id = get_index(prior);
-    random = (float)rand() / (float)RAND_MAX;  // generate target probability
+    random = (float)rand() / RAND_MAX;  // generate target probability
     int sum = 0;
 
     for (auto pair : alphabet) {
@@ -246,31 +251,32 @@ void TableArr::generate_text(float a, char *prior, uint textSize,
         }
       }
     } else {
+      char rand_char;
       if (relative_random) {
         // put a random char relative to the letter occorrency
-        // for (auto pair : symbols) {
-        //   prob += (float)pair.second / (float)this->total;
-        //   if (prob > random) {
-        //     rand_char = pair.first;
-        //     break;
-        //   }
-        // }
-        assert(false);
+        for (auto pair : symbols) {
+          prob += (float)pair.second / this->total;
+          if (prob > random) {
+            rand_char = pair.first;
+            break;
+          }
+        }
       } else {
         // put a random char uniformly distributed
-        advance(it, rand() % alphabet.size());
-
-        if (show_random)
-          printf("\33[34m%c\33[0m", (*it).first);
-        else
-          printf("%c", (*it).first);
-
-        for (uint j = 0; j < k - 1; j++) {
-          prior[j] = prior[j + 1];
-        }
-        prior[k - 1] = (*it).first;
-        it = alphabet.begin();
+        auto it = symbols.begin();
+        advance(it, rand() % symbols.size());
+        rand_char = (*it).first;
       }
+
+      if (show_random)
+        printf("\33[34m%c\33[0m", rand_char);
+      else
+        printf("%c", rand_char);
+
+      for (uint j = 0; j < k - 1; j++) {
+        prior[j] = prior[j + 1];
+      }
+      prior[k - 1] = rand_char;
     }
   }
   printf("\n");
@@ -278,10 +284,7 @@ void TableArr::generate_text(float a, char *prior, uint textSize,
 
 ///////////////////////////////////////////////////////////////////////
 
-TableHash::TableHash(uint k, map<char, uint> symbols) : Table(k) {
-  this->symbols = symbols;
-  this->total = 0;
-}
+TableHash::TableHash(uint k, map<char, uint> symbols) : Table(k, symbols) {}
 
 void TableHash::train(FILE *fptr) {
   rewind(fptr);
@@ -297,12 +300,12 @@ void TableHash::train(FILE *fptr) {
   do {
     symbols[next_char]++;
     this->total++;
-    
+
     if (table.find(context) != table.end()) {
       table[context].occorrencies[next_char]++;
       table[context].sum++;
     } else {
-      std::map<char, int> occ;
+      map<char, int> occ;
       occ[next_char] = 1;
       state st = {occ, 1};
       table[context] = st;
@@ -312,8 +315,8 @@ void TableHash::train(FILE *fptr) {
     for (uint i = 0; i < k - 1; i++) {
       context[i] = context[i + 1];
     }
-
     context[k - 1] = next_char;
+
     next_char = fgetc(fptr);
 
   } while (next_char != EOF);
@@ -429,7 +432,7 @@ void TableHash::generate_text(float a, char *prior, uint textSize,
   printf("\n\33[4m%s\33[0m", prior);
   for (uint i = 0; i < textSize; i++) {
     prob = 0;
-    random = (float)rand() / (float)RAND_MAX;  // generate target probability
+    random = (float)rand() / RAND_MAX;  // generate target probability
 
     if (table.find(prior) != table.end()) {
       for (auto pair : symbols) {
@@ -457,7 +460,7 @@ void TableHash::generate_text(float a, char *prior, uint textSize,
       if (relative_random) {
         // put a random char relative to the letter occorrency
         for (auto pair : symbols) {
-          prob += (float)pair.second / (float)this->total;
+          prob += (float)pair.second / this->total;
           if (prob > random) {
             rand_char = pair.first;
             break;
@@ -490,6 +493,8 @@ FCM::FCM(uint k) { this->k = k; }
 
 void FCM::train(FILE *fptr, float threshold = 0) {
   rewind(fptr);  // move the file pointer back to the start of the file
+  symbols.clear();
+  alphabet.clear();
 
   // check the characters in the file
   uint id = 0;
@@ -511,7 +516,7 @@ void FCM::train(FILE *fptr, float threshold = 0) {
     table = new TableHash(k, symbols);
   } else {
     printf("Creating array table...\n");
-    table = new TableArr(k, alphabet);
+    table = new TableArr(k, symbols, alphabet);
   }
   table->train(fptr);
 }
