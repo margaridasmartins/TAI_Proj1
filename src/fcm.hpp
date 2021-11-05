@@ -10,7 +10,6 @@
 #include <cstring>
 #include <iostream>
 #include <map>
-#include <set>
 #include <stack>
 #include <string>
 #include <utility>
@@ -21,7 +20,7 @@ using namespace std;
 
 struct state {
   map<char, int> occorrencies;
-  int sum;
+  uint sum;
 };
 
 class Table {
@@ -118,7 +117,7 @@ void TableArr::train(FILE *fptr) {
   char context[k];
 
   // first k letters
-  fgets(context, k, fptr);
+  fgets(context, k + 1, fptr);
 
   // k+1 letter
   char next_char = fgetc(fptr);
@@ -206,19 +205,16 @@ void TableArr::generate_text(float a, char prior[] = NULL,
   uint id;
   auto it = alphabet.begin();
 
-  if (prior == NULL) {
-    // create random context
-    do {
-      for (uint i = 0; i < k; i++) {
-        advance(it, rand() % alphabet.size());
-        context[i] = (*it).first;
-        it = alphabet.begin();
-      }
-    } while (table[get_index(context)][0] == 0);
-    printf("%s\n", context);
+  if (prior[0] == 0) {
+    // create random prior
+    for (uint i = 0; i < k; i++) {
+      advance(it, rand() % alphabet.size());
+      prior[i] = (*it).first;
+      it = alphabet.begin();
+    }
   }
 
-  printf("\33[45m%s\33[0m", prior);
+  printf("\n\33[4m%s\33[0m", prior);
   // write 1000 characters
   for (uint i = 0; i < textSize; i++) {
     prob = 0;
@@ -227,14 +223,14 @@ void TableArr::generate_text(float a, char prior[] = NULL,
     int sum = 0;
 
     for (auto pair : alphabet) {
-      // printf("%d %d %d %d \n", pow(alphabet.size(), k));
-      sum += table[id][alphabet[pair.first]];
+      sum += table[id][alphabet[pair.first] + 1];
     }
 
     if (sum != 0) {
       for (auto pair : alphabet) {
-        prob += (float)(table[id][alphabet[pair.first]]) / (float)(sum);
-        printf("%f", prob);
+        prob += (float)(table[id][alphabet[pair.first] + 1] + a) /
+                (sum + a * alphabet.size());
+
         if (prob > random) {
           printf("%c", pair.first);
           for (uint j = 0; j < k - 1; j++) {
@@ -278,16 +274,16 @@ void TableHash::train(FILE *fptr) {
   char next_char = fgetc(fptr);
   do {
     symbols[next_char]++;
+    this->total++;
+    
     if (table.find(context) != table.end()) {
       table[context].occorrencies[next_char]++;
       table[context].sum++;
-      this->total++;
     } else {
       std::map<char, int> occ;
       occ[next_char] = 1;
       state st = {occ, 1};
       table[context] = st;
-      this->total++;
     }
 
     // slide one
@@ -399,15 +395,23 @@ void TableHash::generate_text(float a, char prior[], uint textSize = 1000) {
   }
 
   // write 1000 characters
-  printf("\33[45m%s\33[0m", prior);
+  printf("\n\33[4m%s\33[0m", prior);
   for (uint i = 0; i < textSize; i++) {
     prob = 0;
     random = (float)rand() / (float)RAND_MAX;  // generate target probability
 
     if (table.find(prior) != table.end()) {
-      for (auto pair : table[prior].occorrencies) {
-        prob += (float)(pair.second + a) /
-                (float)(table[prior].sum + (a * symbols.size()));
+      for (auto pair : symbols) {
+        if (table[prior].occorrencies.find(pair.first) !=
+            table[prior].occorrencies.end()) {
+          // symbol registed on map
+          prob += (double)(table[prior].occorrencies[pair.first] + a) /
+                  (table[prior].sum + a * symbols.size());
+        } else {
+          // symbol not found
+          prob += (double)a / (table[prior].sum + a * symbols.size());
+        }
+
         if (prob > random) {
           printf("%c", pair.first);
           for (uint j = 0; j < k - 1; j++) {
