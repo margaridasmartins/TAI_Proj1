@@ -505,7 +505,7 @@ void FCM::train(FILE *fptr, float threshold = 0) {
     c = fgetc(fptr);
   } while (c != EOF);
 
-  double tablesize = (pow(symbols.size(), k + 1)) / 1024 / 1024;
+  double tablesize = (pow(symbols.size(), k + 1)) * 16 / 8 / 1024 / 1024;
   printf("Size of table: %f MB\n", tablesize);
 
   if (tablesize > threshold) {
