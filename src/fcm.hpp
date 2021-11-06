@@ -14,6 +14,7 @@
 #include <stack>
 #include <string>
 #include <utility>
+#include <unordered_map>
 
 #include "utils.hpp"
 
@@ -60,7 +61,7 @@ class TableArr : public Table {
 
 class TableHash : public Table {
  private:
-  map<string, state> table;
+  unordered_map<string, state> table;
 
  public:
   TableHash(uint k, map<char, uint> symbols);

@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
   char *prior = new char[k];
   prior[0] = 0;
-  float threshold = 500;
+  float threshold = 256;
   uint text_size = 1000;
   int option, option_index = 0;
   int relative_random = 0, show_random = 0;
