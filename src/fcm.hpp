@@ -193,16 +193,16 @@ void TableArr::print() {
 double TableArr::get_entropy(float a) {
   assert(a > 0);
   double ent = 0;
-  uint r = pow(alphabet.size(), k);
   double contextEnt = 0;
   double letterProb;
-  for (uint id = 0; id < r; id++) {
-    for (uint j = 0; j < alphabet.size(); j++) {
+  for (uint id = 0; id < pow(symbols.size(), k); id++) {
+    for (uint j = 0; j < symbols.size(); j++) {
       letterProb = (double)(table[id][j + 1] + a) /
-                   (table[id][0] + a * alphabet.size());
+                   (table[id][0] + a * symbols.size());
       contextEnt -= letterProb * log2(letterProb);
     }
-    ent += (double)table[id][0] / this->total * contextEnt;
+    ent += (double)(table[id][0] + a * symbols.size()) / 
+           (this->total + a * symbols.size() * pow(symbols.size(), k)) * contextEnt;
     contextEnt = 0;
   }
   return ent;
@@ -395,8 +395,8 @@ double TableHash::get_entropy(float a) {
     letterProb = (double)a / (pair.second.sum + a * symbols.size());
     contextEnt -= (letterProb * log2(letterProb)) * n;
 
-    ent += (double)(pair.second.sum + a) /
-           (this->total + a * pow(symbols.size(), k)) * contextEnt;
+    ent += (double)(pair.second.sum + a * symbols.size()) /
+           (this->total + a * symbols.size() * pow(symbols.size(), k)) * contextEnt;
     contextEnt = 0;
   }
   // contexts not present in table
@@ -488,7 +488,7 @@ void TableHash::generate_text(float a, char *prior, uint text_size,
 
 FCM::FCM(uint k) { this->k = k; }
 
-void FCM::train(FILE *fptr, float threshold = 0) {
+void FCM::train(FILE *fptr, float threshold = 1000) {
   rewind(fptr);  // move the file pointer back to the start of the file
   symbols.clear();
   alphabet.clear();
