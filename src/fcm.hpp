@@ -197,11 +197,11 @@ double TableArr::get_entropy(float a) {
   double letterProb;
   for (uint id = 0; id < r; id++) {
     for (uint j = 0; j < alphabet.size(); j++) {
-      letterProb = (float)(table[id][j + 1] + a) /
-                   (float)(table[id][0] + a * alphabet.size());
+      letterProb = (double)(table[id][j + 1] + a) /
+                   (table[id][0] + a * alphabet.size());
       contextEnt -= letterProb * log2(letterProb);
     }
-    ent += ((float)table[id][0] / (float)this->total) * contextEnt;
+    ent += (double)table[id][0] / this->total * contextEnt;
     contextEnt = 0;
   }
   return ent;
@@ -400,11 +400,11 @@ double TableHash::get_entropy(float a) {
   }
   // contexts not present in table
   double n = pow(symbols.size(), k) - table.size();
-  letterProb = (double)1 / symbols.size();  // a / (a * symbols.size())
+  letterProb = (double)1 / symbols.size();
   contextEnt = -(letterProb * log2(letterProb)) * symbols.size();
 
-  ent += (double)a / 
-         (this->total + a * pow(symbols.size(), k)) * contextEnt * n;
+  ent += (double)a * symbols.size() / 
+         (this->total + a * symbols.size() * pow(symbols.size(), k)) * contextEnt * n;
 
   return ent;
 }
@@ -424,8 +424,8 @@ void TableHash::generate_text(float a, char *prior, uint text_size,
     }
   }
 
-  // write 1000 characters
   printf("\n\33[4m%s\33[0m", prior);
+  // write 1000 characters
   for (uint i = 0; i < text_size; i++) {
     prob = 0;
     random = (float)rand() / RAND_MAX;  // generate target probability

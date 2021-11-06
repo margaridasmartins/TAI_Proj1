@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
   printf("Entropy: %2.5f\n", fcm->get_entropy(a));
 
   if (show_stats) {
-    printf("\nCreating plots...");
+    printf("\nCreating plots...\n");
     plot_graphs(fptr);
   }
 

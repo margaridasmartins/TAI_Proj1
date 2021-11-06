@@ -9,9 +9,9 @@ int main(int argc, char *argv[]) {
       "  context_size   The size of the context which translates into the order of the model\n"
       "  alpha          The value for the smoothing parameter\n"
       "Options:\n"
-      "  -p | --prior=<context>     The initial context to feed the generator (random if not provided)\n"
-      "  -s | --text-size=<size>    The size of the text to be generated (default is 1000)\n"
-      "  -t | --threshold=<size>    The maximum table size in MB to use an array based model rather than hash based (default is 500)\n"
+      "  -p | --prior <context>     The initial context to feed the generator (random if not provided)\n"
+      "  -s | --text-size <size>    The size of the text to be generated (default is 1000)\n"
+      "  -t | --threshold <size>    The maximum table size in MB to use an array based model rather than hash based (default is 500)\n"
       "  -h | --help                Print a helper message to use the program\n"
       "       --show-random         Distinguish symbols generated randomly for not having a trained context\n"
       "       --relative-random     Generate symbols with no trained context according to the character frequency\n"
@@ -80,7 +80,6 @@ int main(int argc, char *argv[]) {
   FCM *fcm = new FCM(k);
   fcm->train(fptr, threshold);
   // fcm->print_table();
-  printf("p %s\n", prior);
   fcm->generate_text(a, prior, text_size, relative_random, show_random);
 
   fclose(fptr);
