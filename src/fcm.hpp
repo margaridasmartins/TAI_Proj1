@@ -21,7 +21,7 @@
 using namespace std;
 
 struct state {
-  map<char, int> occorrencies;
+  map<char, uint> occorrencies;
   uint sum;
 };
 
@@ -306,7 +306,7 @@ void TableHash::train(FILE *fptr) {
       table[context].occorrencies[next_char]++;
       table[context].sum++;
     } else {
-      map<char, int> occ;
+      map<char, uint> occ;
       occ[next_char] = 1;
       state st = {occ, 1};
       table[context] = st;

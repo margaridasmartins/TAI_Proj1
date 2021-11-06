@@ -5,13 +5,13 @@ int main(int argc, char *argv[]) {
       "Usage:\n"
       "  ./generator filename context_size alpha [options]\n"
       "Required:\n"
-      "  filename       The name of the file inside the example folder to train the generator\n"
+      "  filename       The name of the file inside the example folder to train the model\n"
       "  context_size   The size of the context which translates into the order of the model\n"
       "  alpha          The value for the smoothing parameter\n"
       "Options:\n"
       "  -p | --prior=<context>     The initial context to feed the generator (random if not provided)\n"
       "  -s | --text-size=<size>    The size of the text to be generated (default is 1000)\n"
-      "  -t | --threshold=<size>    The maximum table size in MB to use an array based model rather than hash based (default is 500)\n"
+      "  -t | --threshold=<size>    The maximum table size in MB to use an array based model rather than hash based (default is 256)\n"
       "  -h | --help                Print a helper message to use the program\n"
       "       --show-random         Distinguish symbols generated randomly for not having a trained context\n"
       "       --relative-random     Generate symbols with no trained context according to the character frequency\n"
@@ -56,6 +56,14 @@ int main(int argc, char *argv[]) {
   while ((option = getopt_long(argc, argv, "p:s:t:h", long_options,
                                &option_index)) != -1) {
     switch (option) {
+      case 0:
+        if (long_options[option_index].flag != 0)
+          break;
+        printf ("option %s", long_options[option_index].name);
+        if (optarg)
+          printf (" with arg %s", optarg);
+        printf ("\n");
+        break;
       case 'p':
         if (strlen(optarg) >= k) {
           strncpy(prior, optarg + (strlen(optarg) - k), k);
@@ -72,6 +80,8 @@ int main(int argc, char *argv[]) {
       case 'h':
         printf("%s", help_text.c_str());
         exit(0);
+      case '?':
+        break;
       default:
         abort();
     }
