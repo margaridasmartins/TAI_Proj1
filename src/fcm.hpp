@@ -14,13 +14,14 @@
 #include <stack>
 #include <string>
 #include <utility>
+#include <unordered_map>
 
 #include "utils.hpp"
 
 using namespace std;
 
 struct state {
-  map<char, int> occorrencies;
+  map<char, uint> occorrencies;
   uint sum;
 };
 
@@ -60,7 +61,7 @@ class TableArr : public Table {
 
 class TableHash : public Table {
  private:
-  map<string, state> table;
+  unordered_map<string, state> table;
 
  public:
   TableHash(uint k, map<char, uint> symbols);
@@ -305,7 +306,7 @@ void TableHash::train(FILE *fptr) {
       table[context].occorrencies[next_char]++;
       table[context].sum++;
     } else {
-      map<char, int> occ;
+      map<char, uint> occ;
       occ[next_char] = 1;
       state st = {occ, 1};
       table[context] = st;
@@ -504,7 +505,7 @@ void FCM::train(FILE *fptr, float threshold = 0) {
     c = fgetc(fptr);
   } while (c != EOF);
 
-  double tablesize = (pow(symbols.size(), k + 1)) / 1024 / 1024;
+  double tablesize = (pow(symbols.size(), k + 1)) * 16 / 8 / 1024 / 1024;
   printf("Size of table: %f MB\n", tablesize);
 
   if (tablesize > threshold) {

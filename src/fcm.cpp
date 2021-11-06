@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
       "Usage:\n"
       "  ./fcm filename context_size alpha [options]\n"
       "Required:\n"
-      "  filename       The name of the file inside the example folder to train the generator\n"
+      "  filename       The name of the file inside the example folder to train the model\n"
       "  context_size   The size of the context which translates into the order of the model\n"
       "  alpha          The value for the smoothing parameter\n"
       "Options:\n"
