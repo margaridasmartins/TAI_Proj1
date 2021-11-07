@@ -1,51 +1,90 @@
 #include "fcm.hpp"
 
-// #include <vector>
 #include <sciplot/sciplot.hpp>
 using namespace sciplot;
 
-void plot_graphs(FILE *fptr) {
-  // Create values for your x-axis
-  Vec x = {1, 2, 3, 4, 5, 6};
-  // vector<uint> x = {2, 1, 3, 4, 5, 6};
-
-  // Create a Plot object
+void plot_graph_alpha(FILE *fptr) {
   Plot plot;
 
-  // Set color palette
-  plot.palette("set2");
+  plot.fontSize(5);
+  plot.legend()
+      .atOutsideTop()
+      .displayHorizontal()
+      .displayExpandWidthBy(2)
+      .fontSize(4);
+
+  plot.ylabel("Entropy (bits/letter)");
+  plot.xlabel("Alfa α");
+
+  Vec x = {0.001, 0.01, 0.1, 0.2, 0.5, 1, 2};
+  Vec k = {1, 2, 3, 4, 5};
+
+  for (int i = 0; i < k.size(); i++) {
+    Vec y;
+    y.resize(x.size());
+
+    FCM *fcm = new FCM(k[i]);
+    fcm->train(fptr);
+
+    for (int j = 0; j < x.size(); j++) {
+      y[j] = fcm->get_entropy(x[j]);
+      printf("k= %2d a= %2.5f  ent= %2.7f\n", (uint)k[i], x[j], y[j]);
+    }
+
+    char label[100];
+    sprintf(label, "k= %1.3f", k[i]);
+    plot.drawCurve(x, y).lineWidth(1).label(label);
+  }
+
+  Figure fig = {{plot}};
+
+  fig.palette("moreland");
+  fig.title("Influence of alfa value in the entropy");
+  fig.show();
+  fig.save("graph_alfa2.pdf");
+}
+
+void plot_graph_context(FILE *fptr) {
+  Plot plot;
 
   plot.fontSize(5);
+  plot.legend()
+      .atOutsideBottom()
+      .displayHorizontal()
+      .displayExpandWidthBy(2)
+      .fontSize(4);
 
-  float alphas[4] = {0.001, 0.1, 0.5, 1};
-  Vec *y = new Vec[4];
-  // vector<double> y[4];
+  plot.ylabel("Entropy (bits/letter)");
+  plot.xlabel("Context size k");
 
-  for (int j = 0; j < 4; j++) y[j].resize(6);
+  Vec x = {1, 2, 3, 4, 5, 6, 7, 8};
+  Vec a = {0.001, 0.1, 0.5, 1, 5};
+  Vec *y = new Vec[a.size()];
+
+  for (int j = 0; j < a.size(); j++) y[j].resize(x.size());
 
   for (int i = 0; i < x.size(); i++) {
     FCM *fcm = new FCM(x[i]);
     fcm->train(fptr);
-    // fcm->print_table();
-    for (int j = 0; j < 4; j++) {
-      y[j][i] = fcm->get_entropy(alphas[j]);
-      // y[j].push_back(fcm->get_entropy(alphas[j]));
 
-      printf("k= %2d a= %2.5f  ent= %2.7f\n", (uint)x[i], alphas[j], y[j][i]);
+    for (int j = 0; j < a.size(); j++) {
+      y[j][i] = fcm->get_entropy(a[j]);
+      printf("k= %2d a= %2.5f  ent= %2.7f\n", (uint)x[i], a[j], y[j][i]);
     }
   }
 
-  for (int j = 0; j < 4; j++) {
+  for (int j = 0; j < a.size(); j++) {
     char label[100];
-    sprintf(label, "alpha= %1.3f", alphas[j]);
-    plot.drawCurve(x, y[j]).label(label).lineWidth(1);
+    sprintf(label, "alpha= %1.3f", a[j]);
+    plot.drawCurve(x, y[j]).lineWidth(1).label(label);
   }
 
-  // Show the plot in a pop-up window
-  plot.show();
+  Figure fig = {{plot}};
 
-  // Save the plot to a PDF file
-  plot.save("plot.pdf");
+  fig.palette("moreland");
+  fig.title("Influence of context size in the entropy");
+  fig.show();
+  fig.save("graph_context.pdf");
 }
 
 int main(int argc, char *argv[]) {
@@ -107,7 +146,8 @@ int main(int argc, char *argv[]) {
 
   if (show_stats) {
     printf("\nCreating plots...\n");
-    plot_graphs(fptr);
+    // plot_graph_context(fptr);
+    plot_graph_alpha(fptr);
   }
 
   fclose(fptr);

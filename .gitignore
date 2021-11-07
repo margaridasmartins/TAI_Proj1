@@ -1,3 +1,6 @@
+extra/*
+!extra/**.cpp
+
 bin/*
 !bin/.gitkeep
 

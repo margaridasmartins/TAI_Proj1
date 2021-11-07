@@ -35,7 +35,6 @@ class Table {
   Table(uint k, map<char, uint> symbols);
 
   virtual void train(FILE *fptr) = 0;
-  virtual char get_state(string context) = 0;
   virtual double get_entropy(float a) = 0;
   virtual void generate_text(float a, char prior[], uint text_size,
                              bool relative_random, bool show_random) = 0;
@@ -52,7 +51,6 @@ class TableArr : public Table {
 
   uint get_index(string context);
   void train(FILE *fptr);
-  char get_state(string context);
   double get_entropy(float a);
   void generate_text(float a, char prior[], uint text_size,
                      bool relative_random, bool show_random);
@@ -67,7 +65,6 @@ class TableHash : public Table {
   TableHash(uint k, map<char, uint> symbols);
 
   void train(FILE *fptr);
-  char get_state(string context);
   double get_entropy(float a);
   void generate_text(float a, char prior[], uint text_size,
                      bool relative_random, bool show_random);
@@ -85,7 +82,6 @@ class FCM {
   FCM(uint k);
 
   void train(FILE *fptr, float threshold);
-  char get_state(string context);
   double get_entropy(float a);
   void generate_text(float a, char prior[], uint text_size,
                      bool relative_random, bool show_random);
@@ -149,11 +145,6 @@ void TableArr::train(FILE *fptr) {
   } while (next_char != EOF);
 }
 
-char TableArr::get_state(string context) {
-  // TODO:
-  return 0;
-}
-
 void TableArr::print() {
   // print header
   printf("%6s ", ".    .");
@@ -202,7 +193,7 @@ double TableArr::get_entropy(float a) {
       contextEnt -= letterProb * log2(letterProb);
     }
     ent += (double)(table[id][0] + a * symbols.size()) / 
-           (this->total + a * symbols.size() * pow(symbols.size(), k)) * contextEnt;
+           (this->total + a * pow(symbols.size(), k + 1)) * contextEnt;
     contextEnt = 0;
   }
   return ent;
@@ -323,26 +314,6 @@ void TableHash::train(FILE *fptr) {
   } while (next_char != EOF);
 }
 
-char TableHash::get_state(string context) {
-  // if there is an entry in the hash table with such context
-  if (table.find(context) != table.end()) {
-    auto it = table[context].occorrencies.begin();
-    int max = 0;
-    char max_char;
-
-    // see which is the most probable letter
-    while (it != table[context].occorrencies.end()) {
-      if (it->second > max) {
-        max = it->second;
-        max_char = it->first;
-      }
-      it++;
-    }
-    return max_char;
-  }
-  return 0;
-}
-
 void TableHash::print() {
   // print header
   printf("%6s ", "");
@@ -396,7 +367,7 @@ double TableHash::get_entropy(float a) {
     contextEnt -= (letterProb * log2(letterProb)) * n;
 
     ent += (double)(pair.second.sum + a * symbols.size()) /
-           (this->total + a * symbols.size() * pow(symbols.size(), k)) * contextEnt;
+           (this->total + a * pow(symbols.size(), k + 1)) * contextEnt;
     contextEnt = 0;
   }
   // contexts not present in table
@@ -405,7 +376,7 @@ double TableHash::get_entropy(float a) {
   contextEnt = -(letterProb * log2(letterProb)) * symbols.size();
 
   ent += (double)a * symbols.size() / 
-         (this->total + a * symbols.size() * pow(symbols.size(), k)) * contextEnt * n;
+         (this->total + a * pow(symbols.size(), k + 1)) * contextEnt * n;
 
   return ent;
 }
@@ -488,7 +459,7 @@ void TableHash::generate_text(float a, char *prior, uint text_size,
 
 FCM::FCM(uint k) { this->k = k; }
 
-void FCM::train(FILE *fptr, float threshold = 1000) {
+void FCM::train(FILE *fptr, float threshold = 0) {
   rewind(fptr);  // move the file pointer back to the start of the file
   symbols.clear();
   alphabet.clear();
@@ -517,8 +488,6 @@ void FCM::train(FILE *fptr, float threshold = 1000) {
   }
   table->train(fptr);
 }
-
-char FCM::get_state(string context) { return table->get_state(context); }
 
 double FCM::get_entropy(float a) { return table->get_entropy(a); }
 
