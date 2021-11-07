@@ -1,5 +1,6 @@
 #include "fcm.hpp"
-
+#include <chrono>
+#include <bits/stdc++.h>
 #include <sciplot/sciplot.hpp>
 using namespace sciplot;
 
@@ -83,6 +84,59 @@ void plot_graph_context(FILE *fptr) {
   fig.save("graph_context.pdf");
 }
 
+void plot_graph_time(FILE *fptr) {
+
+  Plot plot;
+
+  plot.fontSize(5);
+  plot.ylabel("Execution time(s)");
+  plot.xlabel("Context size k");
+
+  plot.legend().hide();
+
+  Vec x = {1, 2, 3, 4, 5, 6,7,8};
+
+
+  Vec *y = new Vec[1];
+  y[0].resize(x.size());
+
+  for (int i = 0; i < x.size(); i++) {
+
+    // measuring time
+    auto start = std::chrono::high_resolution_clock::now();
+
+    FCM *fcm = new FCM(x[i]);
+    
+    fcm->train(fptr);
+
+
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    
+    y[0][i] = elapsed.count();
+
+    printf("k= %2d   time= %2.7f\n", (uint)x[i], y[0][i]);
+    
+  }
+
+  float largest = y[0][0];
+  for(int i = 1;i < x.size(); i++) {
+    if(largest < y[0][i])
+      largest = y[0][i];
+  }
+
+  plot.yrange("0", to_string(largest));
+  plot.drawCurve(x, y[0]).lineWidth(1);
+
+ 
+  Figure fig = {{plot}};
+
+  fig.palette("moreland");
+  fig.title("Execution times for different contexts");
+  fig.show();
+  fig.save("graph_time.pdf");
+}
+
 int main(int argc, char *argv[]) {
   string help_text =
       "Usage:\n"
@@ -142,8 +196,9 @@ int main(int argc, char *argv[]) {
 
   if (show_stats) {
     printf("\nCreating plots...\n");
-    // plot_graph_context(fptr);
+    plot_graph_context(fptr);
     plot_graph_alpha(fptr);
+    plot_graph_time(fptr);
   }
 
   fclose(fptr);
