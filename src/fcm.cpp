@@ -8,15 +8,13 @@ void plot_graph_alpha(FILE *fptr) {
 
   plot.fontSize(5);
   plot.legend()
-      .atOutsideTop()
-      .displayHorizontal()
-      .displayExpandWidthBy(2)
-      .fontSize(4);
+      .atBottomRight()
+      .fontSize(10);
 
   plot.ylabel("Entropy (bits/letter)");
   plot.xlabel("Alfa α");
 
-  Vec x = {0.001, 0.01, 0.1, 0.2, 0.5, 1, 2};
+  Vec x = {0.001, 0.01, 0.05, 0.1, 0.2, 0.5, 1};
   Vec k = {1, 2, 3, 4, 5};
 
   for (int i = 0; i < k.size(); i++) {
@@ -28,12 +26,12 @@ void plot_graph_alpha(FILE *fptr) {
 
     for (int j = 0; j < x.size(); j++) {
       y[j] = fcm->get_entropy(x[j]);
-      printf("k= %2d a= %2.5f  ent= %2.7f\n", (uint)k[i], x[j], y[j]);
+      printf("k= %d  a= %2.5f  ent= %2.7f\n", (uint)k[i], x[j], y[j]);
     }
 
     char label[100];
     sprintf(label, "k= %1.3f", k[i]);
-    plot.drawCurve(x, y).lineWidth(1).label(label);
+    plot.drawCurve(x, y).lineWidth(2).label(label);
   }
 
   Figure fig = {{plot}};
@@ -41,7 +39,7 @@ void plot_graph_alpha(FILE *fptr) {
   fig.palette("moreland");
   fig.title("Influence of alfa value in the entropy");
   fig.show();
-  fig.save("graph_alfa2.pdf");
+  fig.save("graph_alfa.pdf");
 }
 
 void plot_graph_context(FILE *fptr) {
@@ -49,10 +47,8 @@ void plot_graph_context(FILE *fptr) {
 
   plot.fontSize(5);
   plot.legend()
-      .atOutsideBottom()
-      .displayHorizontal()
-      .displayExpandWidthBy(2)
-      .fontSize(4);
+      .atBottomRight()
+      .fontSize(10);
 
   plot.ylabel("Entropy (bits/letter)");
   plot.xlabel("Context size k");
@@ -69,14 +65,14 @@ void plot_graph_context(FILE *fptr) {
 
     for (int j = 0; j < a.size(); j++) {
       y[j][i] = fcm->get_entropy(a[j]);
-      printf("k= %2d a= %2.5f  ent= %2.7f\n", (uint)x[i], a[j], y[j][i]);
+      printf("k= %d  a= %2.5f  ent= %2.7f\n", (uint)x[i], a[j], y[j][i]);
     }
   }
 
   for (int j = 0; j < a.size(); j++) {
     char label[100];
     sprintf(label, "alpha= %1.3f", a[j]);
-    plot.drawCurve(x, y[j]).lineWidth(1).label(label);
+    plot.drawCurve(x, y[j]).lineWidth(2).label(label);
   }
 
   Figure fig = {{plot}};
