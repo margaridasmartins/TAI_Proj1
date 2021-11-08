@@ -59,7 +59,7 @@ class TableArr : public Table {
 
 class TableHash : public Table {
  private:
-  unordered_map<string, state> table;
+  unordered_map<string, state> table; //hash table
 
  public:
   TableHash(uint k, map<char, uint> symbols);
@@ -111,7 +111,7 @@ uint TableArr::get_index(string context) {
 };
 
 void TableArr::train(FILE *fptr) {
-  rewind(fptr);
+  rewind(fptr); //put file pointer at the beggining
 
   uint n = alphabet.size();
   uint r = pow(n, k);
@@ -131,8 +131,8 @@ void TableArr::train(FILE *fptr) {
     symbols[next_char]++;
     this->total++;
 
-    table[get_index(context)][alphabet[next_char] + 1]++;
-    table[get_index(context)][0]++;
+    table[get_index(context)][alphabet[next_char] + 1]++;   //increment count of the symbol nextchar for given context
+    table[get_index(context)][0]++;   //increase count of times the context was found
 
     // slide one
     for (uint i = 0; i < k - 1; i++) {
@@ -186,6 +186,8 @@ double TableArr::get_entropy(float a) {
   double ent = 0;
   double contextEnt = 0;
   double letterProb;
+  
+  //transverse the table and calculate entropy
   for (uint id = 0; id < pow(symbols.size(), k); id++) {
     for (uint j = 0; j < symbols.size(); j++) {
       letterProb = (double)(table[id][j + 1] + a) /
@@ -217,22 +219,19 @@ void TableArr::generate_text(float a, char *prior, uint text_size,
   }
 
   printf("\n\33[4m%s\33[0m", prior);
-  // write 1000 characters
+
+  // write text_size characters
   for (uint i = 0; i < text_size; i++) {
     prob = 0;
     id = get_index(prior);
     random = (float)rand() / RAND_MAX;  // generate target probability
-    int sum = 0;
+    int sum = table[id][0];
 
-    for (auto pair : alphabet) {
-      sum += table[id][alphabet[pair.first] + 1];
-    }
-
-    if (sum != 0) {
+    if (sum != 0) {   //if context is trained
       for (auto pair : alphabet) {
+        //add the probabilities of each letter until random is smaller
         prob += (float)(table[id][alphabet[pair.first] + 1] + a) /
                 (sum + a * alphabet.size());
-
         if (prob > random) {
           printf("%c", pair.first);
           for (uint j = 0; j < k - 1; j++) {
@@ -294,10 +293,10 @@ void TableHash::train(FILE *fptr) {
     this->total++;
 
     if (table.find(context) != table.end()) {
-      table[context].occorrencies[next_char]++;
-      table[context].sum++;
+      table[context].occorrencies[next_char]++;   //increment count of the symbol nextchar for given context
+      table[context].sum++;   //increase count of times the context was found
     } else {
-      map<char, uint> occ;
+      map<char, uint> occ;  //create a new state if context is not found
       occ[next_char] = 1;
       state st = {occ, 1};
       table[context] = st;
@@ -353,6 +352,8 @@ double TableHash::get_entropy(float a) {
   double ent = 0;
   double contextEnt = 0;
   double letterProb;
+
+  //transverse the table and calculate entropy
   for (auto pair : table) {
     auto it = pair.second.occorrencies.begin();
     while (it != pair.second.occorrencies.end()) {
@@ -397,13 +398,14 @@ void TableHash::generate_text(float a, char *prior, uint text_size,
   }
 
   printf("\n\33[4m%s\33[0m", prior);
-  // write 1000 characters
+  // write text_size characters
   for (uint i = 0; i < text_size; i++) {
     prob = 0;
     random = (float)rand() / RAND_MAX;  // generate target probability
 
     if (table.find(prior) != table.end()) {
       for (auto pair : symbols) {
+        //add the probabilities of each letter until random is smaller
         if (table[prior].occorrencies.find(pair.first) !=
             table[prior].occorrencies.end()) {
           // symbol registed on map
@@ -464,7 +466,7 @@ void FCM::train(FILE *fptr, float threshold = 0) {
   symbols.clear();
   alphabet.clear();
 
-  // check the characters in the file
+  // check the alphabet of the file
   uint id = 0;
   char c = fgetc(fptr);
   do {
@@ -476,8 +478,9 @@ void FCM::train(FILE *fptr, float threshold = 0) {
     c = fgetc(fptr);
   } while (c != EOF);
 
+  //Calculate theorical size of 2D array
   double tablesize = (pow(symbols.size(), k + 1)) * 16 / 8 / 1024 / 1024;
-  printf("Size of table: %f MB\n", tablesize);
+  printf("Theoretical size of 2D array: %f MB\n", tablesize);
 
   if (tablesize > threshold) {
     printf("Creating hash table...\n");

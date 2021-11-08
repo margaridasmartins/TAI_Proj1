@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 
   FCM *fcm = new FCM(k);
   fcm->train(fptr, threshold);
-  // fcm->print_table();
+  fcm->print_table();
   fcm->generate_text(a, prior, text_size, relative_random, show_random);
 
   fclose(fptr);

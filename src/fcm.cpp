@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
 
   FCM *fcm = new FCM(k);
   fcm->train(fptr);
-  // fcm->print_table();
+  fcm->print_table();
   printf("Entropy: %2.5f\n", fcm->get_entropy(a));
 
   if (show_stats) {
