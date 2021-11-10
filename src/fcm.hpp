@@ -208,14 +208,21 @@ void TableArr::generate_text(float a, char *prior, uint text_size,
   float random;
   float prob;
   uint id;
-
-  if (prior[0] == 0) {
-    // create random prior
-    for (uint i = 0; i < k; i++) {
-      auto it = symbols.begin();
-      advance(it, rand() % symbols.size());
-      prior[i] = (*it).first;
-    }
+  auto it=alphabet.begin();
+  
+  if (prior == NULL)
+  {
+    //create random context
+    do
+    {
+      for (uint i = 0; i < k; i++)
+      {
+        advance(it, rand() % alphabet.size());
+        context[i] = (*it).first;
+        it = alphabet.begin();
+      }
+    } while (table[get_index(context)][0] == 0);
+    printf("%s\n", context);
   }
 
   printf("\n\33[4m%s\33[0m", prior);
@@ -388,13 +395,13 @@ void TableHash::generate_text(float a, char *prior, uint text_size,
   float random;
   float prob;
 
-  if (prior[0] == 0) {
-    // create random prior
-    for (uint i = 0; i < k; i++) {
-      auto it = symbols.begin();
-      advance(it, rand() % symbols.size());
-      prior[i] = (*it).first;
-    }
+  if (prior[0]==0)
+  {
+    //create random prior
+    auto it=table.begin();
+    advance(it, (int)(rand() % table.size()));
+    strcpy(prior,(it->first).c_str());
+
   }
 
   printf("\n\33[4m%s\33[0m", prior);
